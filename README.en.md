@@ -2,7 +2,7 @@
 
 > An image management toolkit for Obsidian
 
-`Image Toolkit Pro` is an Obsidian desktop plugin for localizing external media, organizing attachments, cleaning unused files, and enhancing image preview interactions.
+`Image Toolkit Pro` is an Obsidian desktop plugin for localizing external image resources, organizing attachments, cleaning unused files, and enhancing image preview interactions.
 
 It is especially useful when you want to:
 
