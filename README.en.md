@@ -1,8 +1,8 @@
-# Image Toolkit Pro
+# ImgBox Pro
 
 > An image management toolkit for Obsidian
 
-`Image Toolkit Pro` is an Obsidian desktop plugin for managing images and attachments. It combines media localization, attachment cleanup, and preview interaction enhancements in a single plugin.
+`ImgBox Pro` is an Obsidian desktop plugin for managing images and attachments. It combines media localization, attachment cleanup, and preview interaction enhancements in a single plugin.
 
 ## Highlights
 
@@ -22,7 +22,7 @@ This version is built on `obsidian-local-images-plus` and integrates:
 It also includes:
 
 - top-navigation settings UI: `General / Localize / Cleanup / Preview`
-- settings-page language switching: `Simplified Chinese / English`
+- settings-page language automatically follows Obsidian's system language
 - a cleanup `Ribbon` shortcut
 - the command palette as the full entry point
 
@@ -40,7 +40,7 @@ Command palette entries are intentionally kept in English.
 
 Notes:
 
-- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` is only available in “next to note” mode, and the folder pattern must end with `${notename}` and must not contain `${date}`
+- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` is only available in "next to note" mode, and the folder pattern must end with `${notename}` and must not contain `${date}`
 - the image navigator or image-tab context menu provides: `Go to Source Note`
 
 ## Ribbon
@@ -58,7 +58,6 @@ It triggers:
 
 ### General
 
-- settings-page language
 - notifications
 - extra command visibility
 - cleanup Ribbon visibility
@@ -66,7 +65,7 @@ It triggers:
 - process newly created Markdown files
 - process newly created attachments
 - timestamp naming for new attachments
-- developer options
+- developer options (file-type regex, debug mode)
 
 ### Localize
 
@@ -74,7 +73,7 @@ It triggers:
 - unknown file download
 - image compression
 - compression format and quality
-- file size limit
+- minimum file size
 - excluded extensions
 - link title and original filename preservation
 - link path style
@@ -83,22 +82,19 @@ It triggers:
 
 ### Cleanup
 
-- deletion target
-- log modal
-- whether to exclude subfolders
-- whether to fully delete unlinked attachments
+- deletion target (trash / permanent delete)
+- operation log modal
+- exclude subfolders
 - excluded folder list
 
 ### Preview
 
-- attachment deletion destination
-- deletion log modal
-- “Move file to...” visibility
+- attachment deletion destination (trash / permanent delete)
+- show "Move file to..." menu
 - click-to-preview
 - preview ratio
 - drag-to-resize
 - resize step
-- preview debug mode
 
 ## Supported Image Formats
 
@@ -123,12 +119,12 @@ Notes:
 2. Go to `.obsidian/plugins/`
 3. Copy the plugin folder into it
 4. Restart Obsidian
-5. Enable `Image Toolkit Pro` in Community Plugins
+5. Enable `ImgBox Pro` in Community Plugins
 
 ## Current Version
 
-- plugin name: `Image Toolkit Pro`
-- plugin id: `image-toolkit-pro`
+- plugin name: `ImgBox Pro`
+- plugin id: `imgbox-pro`
 - version: `26.4.2`
 - minimum Obsidian version: `1.0.3`
 - desktop only: `true`
@@ -137,7 +133,7 @@ Notes:
 
 - Back up your vault before batch processing, cleanup, or large-scale link rewriting
 - `Clear Unused Images in Vault` and `Clear Unused Attachments in Vault` scan the whole vault
-- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` only targets the current note’s attachment folder
+- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` only targets the current note's attachment folder
 
 Known compatibility notes from the original project:
 
