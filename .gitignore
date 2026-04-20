@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+/build/
+*.js.map
+
+# IDE & Editor
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+
+# Obsidian Plugin
+data.json
+*.json.bak
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+dev/
+test.sh
