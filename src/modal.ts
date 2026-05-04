@@ -1,6 +1,7 @@
 import { App, Modal } from "obsidian";
 import { APP_NAME } from "./config";
 import LocalImagesPlugin from "./main";
+import { isChineseDisplayLanguage } from "./previewHelpers";
 
 export class ModalW1 extends Modal {
   plugin: LocalImagesPlugin;
@@ -21,7 +22,7 @@ export class ModalW1 extends Modal {
     contentEl
       .createEl("button", {
         cls: ["mod-cta"],
-        text: "Cancel",
+        text: isChineseDisplayLanguage() ? "取消" : "Cancel",
       })
       .addEventListener("click", async () => {
         this.close();
@@ -30,7 +31,7 @@ export class ModalW1 extends Modal {
     contentEl
       .createEl("button", {
         cls: ["mod-cta"],
-        text: "Confirm",
+        text: isChineseDisplayLanguage() ? "确认" : "Confirm",
       })
       .addEventListener("click", async () => {
         this.close();
@@ -65,7 +66,7 @@ export class ModalW2 extends Modal {
     contentEl
       .createEl("button", {
         cls: ["mod-cta"],
-        text: "OK",
+        text: isChineseDisplayLanguage() ? "确定" : "OK",
       })
       .addEventListener("click", async () => {
         this.close();

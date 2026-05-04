@@ -1,6 +1,7 @@
 import { App, TFile } from "obsidian";
 import { ISettings } from "./config";
 import { getAllLinkMatchesInFile, LinkMatch } from "./clearUnusedLinkDetector";
+import { isChineseDisplayLanguage } from "./previewHelpers";
 
 const imageRegex = /.*(jpe?g|png|gif|svg|bmp|webp|avif)/i;
 const bannerRegex = /!\[\[(.*?)\]\]/i;
@@ -122,6 +123,7 @@ export const deleteFilesInTheList = async (
   app: App
 ): Promise<{ deletedImages: number; textToView: string }> => {
   const deleteOption = settings.deleteDestination;
+  const isChinese = isChineseDisplayLanguage();
   let deletedImages = 0;
   let textToView = "";
 
@@ -132,13 +134,19 @@ export const deleteFilesInTheList = async (
 
     if (deleteOption === ".trash") {
       await app.vault.trash(file, false);
-      textToView += `[+] Moved to Obsidian Trash: ${file.path}</br>`;
+      textToView += isChinese
+        ? `[+] 已移动到 Obsidian 回收站：${file.path}</br>`
+        : `[+] Moved to Obsidian Trash: ${file.path}</br>`;
     } else if (deleteOption === "system-trash") {
       await app.vault.trash(file, true);
-      textToView += `[+] Moved to System Trash: ${file.path}</br>`;
+      textToView += isChinese
+        ? `[+] 已移动到系统回收站：${file.path}</br>`
+        : `[+] Moved to System Trash: ${file.path}</br>`;
     } else if (deleteOption === "permanent") {
       await app.vault.delete(file);
-      textToView += `[+] Deleted Permanently: ${file.path}</br>`;
+      textToView += isChinese
+        ? `[+] 已永久删除：${file.path}</br>`
+        : `[+] Deleted Permanently: ${file.path}</br>`;
     }
 
     deletedImages++;
@@ -179,7 +187,7 @@ const fileIsInExcludedFolder = (file: TFile, settings: ISettings): boolean => {
 
 export const getFormattedDate = () => {
   const dt = new Date();
-  return dt.toLocaleDateString("en-GB", {
+  return dt.toLocaleDateString(isChineseDisplayLanguage() ? "zh-CN" : "en-GB", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

@@ -1,4 +1,5 @@
 import { App, Modal } from "obsidian";
+import { isChineseDisplayLanguage } from "./previewHelpers";
 
 export class ClearUnusedLogsModal extends Modal {
   title: string;
@@ -24,7 +25,9 @@ export class ClearUnusedLogsModal extends Modal {
 
     const buttonWrapper = contentEl.createEl("div");
     buttonWrapper.addClass("unused-images-center-wrapper");
-    const closeButton = buttonWrapper.createEl("button", { text: "Close" });
+    const closeButton = buttonWrapper.createEl("button", {
+      text: isChineseDisplayLanguage() ? "关闭" : "Close",
+    });
     closeButton.addClass("unused-images-button");
     closeButton.addEventListener("click", () => {
       this.close();

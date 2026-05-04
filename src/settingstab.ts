@@ -317,6 +317,10 @@ export default class SettingTab extends PluginSettingTab {
       );
   }
 
+  private createSettingGroup(containerEl: HTMLElement): HTMLElement {
+    return containerEl.createDiv({ cls: "lip-settings-group" });
+  }
+
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
@@ -367,8 +371,9 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 通用 =====================
     const generalEl = sectionEls.get("general")!;
+    const generalGroupEl = this.createSettingGroup(generalEl);
 
-    new Setting(generalEl)
+    new Setting(generalGroupEl)
       .setName(t("showNotifications"))
       .setDesc(t("showNotificationsDesc"))
       .addToggle((toggle) =>
@@ -378,7 +383,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(generalEl)
+    new Setting(generalGroupEl)
       .setName(t("showCleanupRibbon"))
       .setDesc(t("showCleanupRibbonDesc"))
       .addToggle((toggle) =>
@@ -389,7 +394,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(generalEl)
+    new Setting(generalGroupEl)
       .setName(t("autoProcess"))
       .setDesc(t("autoProcessDesc"))
       .addToggle((toggle) =>
@@ -400,7 +405,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    this.addNumberSetting(generalEl, {
+    this.addNumberSetting(generalGroupEl, {
       name: t("autoProcessInterval"),
       desc: t("autoProcessIntervalDesc"),
       value: this.plugin.settings.autoProcessInterval,
@@ -415,7 +420,7 @@ export default class SettingTab extends PluginSettingTab {
       invalidMessage: t("autoProcessIntervalInvalid"),
     });
 
-    new Setting(generalEl)
+    new Setting(generalGroupEl)
       .setName(t("processNewMarkdown"))
       .setDesc(t("processNewMarkdownDesc"))
       .addToggle((toggle) =>
@@ -450,9 +455,10 @@ export default class SettingTab extends PluginSettingTab {
     const toolsContentEl = toolsDetailsEl.createDiv({
       cls: "lip-settings-collapsible-content",
     });
+    const toolsGroupEl = this.createSettingGroup(toolsContentEl);
     toolsContentEl.hide();
 
-    new Setting(toolsContentEl)
+    new Setting(toolsGroupEl)
       .setName(t("showBatchCommands"))
       .setDesc(t("showBatchCommandsDesc"))
       .addToggle((toggle) =>
@@ -488,12 +494,14 @@ export default class SettingTab extends PluginSettingTab {
     const advancedContentEl = advancedDetailsEl.createDiv({
       cls: "lip-settings-collapsible-content",
     });
+    const advancedGroupEl = this.createSettingGroup(advancedContentEl);
     advancedContentEl.hide();
 
     // ===================== 图片本地化 =====================
     const localizeEl = sectionEls.get("localize")!;
+    const localizeGroupEl = this.createSettingGroup(localizeEl);
 
-    this.addNumberSetting(localizeEl, {
+    this.addNumberSetting(localizeGroupEl, {
       name: t("downloadRetryCount"),
       desc: t("downloadRetryCountDesc"),
       value: this.plugin.settings.downloadRetryCount,
@@ -507,7 +515,7 @@ export default class SettingTab extends PluginSettingTab {
       invalidMessage: t("downloadRetryCountInvalid"),
     });
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("processNewAttachments"))
       .setDesc(t("processNewAttachmentsDesc"))
       .addToggle((toggle) =>
@@ -517,7 +525,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("downloadUnknownTypes"))
       .setDesc(t("downloadUnknownTypesDesc"))
       .addToggle((toggle) =>
@@ -527,7 +535,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("compressImage"))
       .setDesc(t("compressImageDesc"))
       .addToggle((toggle) =>
@@ -537,7 +545,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("compressionFormat"))
       .setDesc(t("compressionFormatDesc"))
       .addDropdown((dropdown) => {
@@ -551,7 +559,7 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    this.addNumberSetting(localizeEl, {
+    this.addNumberSetting(localizeGroupEl, {
       name: t("compressionQuality"),
       desc: t("compressionQualityDesc"),
       value: this.plugin.settings.compressionQuality,
@@ -565,7 +573,7 @@ export default class SettingTab extends PluginSettingTab {
       invalidMessage: t("compressionQualityInvalid"),
     });
 
-    this.addNumberSetting(localizeEl, {
+    this.addNumberSetting(localizeGroupEl, {
       name: t("minFileSizeKB"),
       desc: t("minFileSizeKBDesc"),
       value: this.plugin.settings.minFileSizeKB,
@@ -578,7 +586,7 @@ export default class SettingTab extends PluginSettingTab {
       invalidMessage: t("positiveIntegerInvalid"),
     });
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("excludedExtensions"))
       .setDesc(t("excludedExtensionsDesc"))
       .addText((text) =>
@@ -588,7 +596,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("useTimestampNaming"))
       .setDesc(t("useTimestampNamingDesc"))
       .addToggle((toggle) =>
@@ -598,7 +606,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("preserveCaptions"))
       .setDesc(t("preserveCaptionsDesc"))
       .addToggle((toggle) =>
@@ -608,7 +616,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("attachmentSaveLocation"))
       .setDesc(t("attachmentSaveLocationDesc"))
       .addDropdown((dropdown) =>
@@ -624,7 +632,7 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("mediaFolderPath"))
       .setDesc(t("mediaFolderPathDesc"))
       .setClass("media_folder_set")
@@ -639,7 +647,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("linkPathFormat"))
       .setDesc(t("linkPathFormatDesc"))
       .addDropdown((dropdown) =>
@@ -654,7 +662,7 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("dateFormat"))
       .setDesc(t("dateFormatDesc"))
       .addText((text) =>
@@ -668,7 +676,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(localizeGroupEl)
       .setName(t("preserveCaptions"))
       .setDesc(t("preserveCaptionsDesc"))
       .addToggle((toggle) =>
@@ -703,9 +711,10 @@ export default class SettingTab extends PluginSettingTab {
     const localizeAdvancedContentEl = localizeAdvancedDetailsEl.createDiv({
       cls: "lip-settings-collapsible-content",
     });
+    const localizeAdvancedGroupEl = this.createSettingGroup(localizeAdvancedContentEl);
     localizeAdvancedContentEl.hide();
 
-    new Setting(localizeAdvancedContentEl)
+    new Setting(localizeAdvancedGroupEl)
       .setName(t("appendOriginalName"))
       .setDesc(t("appendOriginalNameDesc"))
       .addToggle((toggle) =>
@@ -715,7 +724,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeAdvancedContentEl)
+    new Setting(localizeAdvancedGroupEl)
       .setName(t("syncMediaFolder"))
       .setDesc(t("syncMediaFolderDesc"))
       .setClass("media_folder_set")
@@ -726,7 +735,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeAdvancedContentEl)
+    new Setting(localizeAdvancedGroupEl)
       .setName(t("skipObsidianFolderCreation"))
       .setDesc(t("skipObsidianFolderCreationDesc"))
       .addToggle((toggle) =>
@@ -738,8 +747,9 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 图片预览 =====================
     const previewEl = sectionEls.get("preview")!;
+    const previewGroupEl = this.createSettingGroup(previewEl);
 
-    new Setting(previewEl)
+    new Setting(previewGroupEl)
       .setName(t("clickPreviewEnabled"))
       .setDesc(t("clickPreviewEnabledDesc"))
       .addToggle((toggle) =>
@@ -749,7 +759,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(previewEl)
+    new Setting(previewGroupEl)
       .setName(t("previewAdaptiveRatio"))
       .setDesc(t("previewAdaptiveRatioDesc"))
       .addSlider((slider) => {
@@ -764,7 +774,7 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    new Setting(previewEl)
+    new Setting(previewGroupEl)
       .setName(t("dragResizeEnabled"))
       .setDesc(t("dragResizeEnabledDesc"))
       .addToggle((toggle) =>
@@ -774,7 +784,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    this.addNumberSetting(previewEl, {
+    this.addNumberSetting(previewGroupEl, {
       name: t("dragResizeStep"),
       desc: t("dragResizeStepDesc"),
       value: this.plugin.settings.dragResizeStep,
@@ -790,8 +800,9 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 图片清理 =====================
     const cleanupEl = sectionEls.get("cleanup")!;
+    const cleanupGroupEl = this.createSettingGroup(cleanupEl);
 
-    new Setting(cleanupEl)
+    new Setting(cleanupGroupEl)
       .setName(t("deleteDestination"))
       .setDesc(t("deleteDestinationDesc"))
       .addDropdown((dropdown) => {
@@ -806,7 +817,7 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    new Setting(cleanupEl)
+    new Setting(cleanupGroupEl)
       .setName(t("showOperationLogs"))
       .setDesc(t("showOperationLogsDesc"))
       .addToggle((toggle) =>
@@ -816,7 +827,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(cleanupEl)
+    new Setting(cleanupGroupEl)
       .setName(t("excludedFolders"))
       .setDesc(t("excludedFoldersDesc"))
       .addTextArea((text) => {
@@ -851,7 +862,7 @@ export default class SettingTab extends PluginSettingTab {
         text.inputEl.style.width = "100%";
       });
 
-    new Setting(cleanupEl)
+    new Setting(cleanupGroupEl)
       .setName(t("excludeSubfolders"))
       .setDesc(t("excludeSubfoldersDesc"))
       .addToggle((toggle) =>
@@ -862,7 +873,7 @@ export default class SettingTab extends PluginSettingTab {
       );
 
     // ===================== 开发者选项（折叠内容） =====================
-    new Setting(advancedContentEl)
+    new Setting(advancedGroupEl)
       .setName(t("debugMode"))
       .setDesc(t("debugModeDesc"))
       .addToggle((toggle) =>
