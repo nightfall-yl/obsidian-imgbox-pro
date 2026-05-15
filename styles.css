@@ -183,6 +183,7 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
   padding: var(--lip-settings-group-padding);
   border-radius: var(--lip-settings-group-radius);
   background: var(--lip-settings-group-bg);
+  border-radius: 0;
 }
 
 .lip-settings-group + .lip-settings-collapsible,

@@ -181,7 +181,7 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     downloadRetryCountInvalid: "Please enter an integer between 1 and 6.",
     downloadUnknownTypes: "Download unknown file types",
     downloadUnknownTypesDesc:
-      "Download unknown file types and save them with the `.unknown` extension.",
+      "Download unknown types and save them with the `.unknown` extension.",
     compressImage: "Compress images",
     compressImageDesc:
       "Compress downloaded and pasted images. This can reduce file size but may affect performance.",
@@ -506,6 +506,7 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 图片本地化 =====================
     const localizeEl = sectionEls.get("localize")!;
+    const localizeGroupEl = this.createSettingGroup(localizeEl);
 
     // ── 下载行为 ──
     localizeEl.createEl("h3", { text: t("subgroupDownloadTitle"), cls: "lip-settings-subgroup-title" });
@@ -805,7 +806,6 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 图片清理 =====================
     const cleanupEl = sectionEls.get("cleanup")!;
-
     const cleanupGroupEl = this.createSettingGroup(cleanupEl);
 
     new Setting(cleanupGroupEl)
