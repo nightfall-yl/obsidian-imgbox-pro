@@ -4,7 +4,11 @@ package-lock.json
 
 # Build outputs
 /build/
+/released/
+/dist/main.js.map
 *.js.map
+# Root-level build artifacts (build now goes to dist/)
+/main.js.LICENSE.txt
 
 # IDE & Editor
 .idea/

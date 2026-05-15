@@ -38,6 +38,7 @@ import { ClearUnusedLogsModal } from "./clearUnusedModal";
 import { deleteFilesInTheList, getFormattedDate, getUnusedAttachments } from "./clearUnusedUtils";
 import { getAllLinkMatchesInFile } from "./clearUnusedLinkDetector";
 import { PreviewFeature } from "./previewFeature";
+import { isChineseDisplayLanguage } from "./previewHelpers";
 const fs = require("fs").promises;
 
 //import { count, log } from "console"
@@ -327,39 +328,67 @@ export default class LocalImagesPlugin extends Plugin {
   };
 
   clearUnusedAttachments = async (type: "all" | "image") => {
+    const isChinese = isChineseDisplayLanguage();
+    const targetName = isChinese
+      ? type === "image"
+        ? "图片"
+        : "附件"
+      : type === "image"
+      ? "image(s)"
+      : "attachment(s)";
     const unusedAttachments: TFile[] = await getUnusedAttachments(this.app, type);
     const len = unusedAttachments.length;
 
     if (len <= 0) {
       new Notice(
-        `All ${type === "image" ? "images" : "attachments"} are used. Nothing was deleted.`
+        isChinese
+          ? `所有${targetName}都在使用中，未删除任何文件。`
+          : `All ${type === "image" ? "images" : "attachments"} are used. Nothing was deleted.`
       );
       return;
     }
 
-    let logs = `[+] ${getFormattedDate()}: Clearing started.</br>`;
+    let logs = isChinese
+      ? `[+] ${getFormattedDate()}：开始清理。</br>`
+      : `[+] ${getFormattedDate()}: Clearing started.</br>`;
     const { deletedImages, textToView } = await deleteFilesInTheList(
       unusedAttachments,
       this.settings,
       this.app
     );
     logs += textToView;
-    logs += `[+] ${deletedImages.toString()} ${type === "image" ? "image(s)" : "attachment(s)"} in total deleted.</br>`;
-    logs += `[+] ${getFormattedDate()}: Clearing completed.`;
+    logs += isChinese
+      ? `[+] 共删除 ${deletedImages.toString()} 个${targetName}。</br>`
+      : `[+] ${deletedImages.toString()} ${targetName} in total deleted.</br>`;
+    logs += isChinese
+      ? `[+] ${getFormattedDate()}：清理完成。`
+      : `[+] ${getFormattedDate()}: Clearing completed.`;
 
     if (deletedImages === 0) {
-      new Notice("No files were deleted. All unused files are inside excluded folders.");
+      new Notice(
+        isChinese
+          ? "未删除任何文件。所有未使用文件都位于排除文件夹中。"
+          : "No files were deleted. All unused files are inside excluded folders."
+      );
       return;
     }
 
     if (this.settings.showOperationLogs) {
       const modalTitle =
-        type === "image" ? "Clear Unused Images - Logs" : "Clear Unused Attachments - Logs";
+        type === "image"
+          ? isChinese
+            ? "清理未使用图片 - 日志"
+            : "Clear Unused Images - Logs"
+          : isChinese
+          ? "清理未使用附件 - 日志"
+          : "Clear Unused Attachments - Logs";
       const modal = new ClearUnusedLogsModal(modalTitle, logs, this.app);
       modal.open();
     } else {
       new Notice(
-        `Deleted ${deletedImages} unused ${type === "image" ? "image(s)" : "attachment(s)"}.`
+        isChinese
+          ? `已删除 ${deletedImages} 个未使用${targetName}。`
+          : `Deleted ${deletedImages} unused ${targetName}.`
       );
     }
   };
@@ -563,7 +592,9 @@ export default class LocalImagesPlugin extends Plugin {
           oldRootdir.includes("${date}")
         ) {
           showBalloon(
-            "This command requires the settings 'Next to note in the folder specified below' and pattern '${notename}' at the end to be enabled, also the path cannot contain ${date} pattern.\nPlease, change settings first!\r\n",
+            isChineseDisplayLanguage()
+              ? "此命令需要启用“保存在笔记旁边的指定文件夹”，并且路径末尾使用“${notename}”模板，同时路径不能包含“${date}”模板。\n请先修改设置！\r\n"
+              : "This command requires the settings 'Next to note in the folder specified below' and pattern '${notename}' at the end to be enabled, also the path cannot contain ${date} pattern.\nPlease, change settings first!\r\n",
             this.settings.showNotifications
           );
           return;
@@ -573,7 +604,9 @@ export default class LocalImagesPlugin extends Plugin {
           noteFile = this.getCurrentNote();
           if (!noteFile) {
             showBalloon(
-              "Please, select a note or click inside a note in canvas!",
+              isChineseDisplayLanguage()
+                ? "请选择一篇笔记，或在画布中的笔记内点击后重试！"
+                : "Please, select a note or click inside a note in canvas!",
               this.settings.showNotifications
             );
             return;
@@ -585,7 +618,9 @@ export default class LocalImagesPlugin extends Plugin {
           oldRootdir = trimAny(pathJoin([path.parse(noteFile.path)?.dir, oldRootdir]), ["\/"]);
           if (!(await this.app.vault.exists(oldRootdir))) {
             showBalloon(
-              "The attachment folder " + oldRootdir + " does not exist!",
+              isChineseDisplayLanguage()
+                ? `附件文件夹 ${oldRootdir} 不存在！`
+                : "The attachment folder " + oldRootdir + " does not exist!",
               this.settings.showNotifications
             );
             return;
@@ -603,17 +638,23 @@ export default class LocalImagesPlugin extends Plugin {
 
           if (orphanedAttachments.length > 0) {
             const mod = new ModalW1(this.app);
-            mod.messg =
-              "Confirm clearing " +
-              orphanedAttachments.length +
-              " unlinked attachment(s) from '" +
-              oldRootdir +
-              "'\r\n\r\n      ";
+            mod.messg = isChineseDisplayLanguage()
+              ? `确认从“${oldRootdir}”清理 ${orphanedAttachments.length} 个未关联附件？\r\n\r\n      `
+              : "Confirm clearing " +
+                orphanedAttachments.length +
+                " unlinked attachment(s) from '" +
+                oldRootdir +
+                "'\r\n\r\n      ";
             mod.plugin = this;
             mod.callbackFunc = this.removeOrphans("execremove", orphanedAttachments);
             mod.open();
           } else {
-            showBalloon("No unlinked attachments found!", this.settings.showNotifications);
+            showBalloon(
+              isChineseDisplayLanguage()
+                ? "未找到未关联附件！"
+                : "No unlinked attachments found!",
+              this.settings.showNotifications
+            );
           }
         }
       }
@@ -621,18 +662,21 @@ export default class LocalImagesPlugin extends Plugin {
       if (type == "execremove") {
         const useSysTrash = this.app.vault.getConfig("trashOption") === "system";
         const deletePermanently = this.settings.deleteDestination === "permanent";
+        const isChinese = isChineseDisplayLanguage();
         let msg = "";
 
         if (filesToRemove) {
           filesToRemove.forEach((el: TFile) => {
             if (deletePermanently) {
-              msg = "were deleted completely.";
+              msg = isChinese ? "已永久删除。" : "were deleted completely.";
               this.app.vault.delete(el, true);
             } else {
               if (useSysTrash) {
-                msg = "were moved to the system garbage can.";
+                msg = isChinese ? "已移动到系统回收站。" : "were moved to the system garbage can.";
               } else {
-                msg = "were moved to the Obsidian garbage can.";
+                msg = isChinese
+                  ? "已移动到 Obsidian 回收站。"
+                  : "were moved to the Obsidian garbage can.";
               }
               this.app.vault.trash(el, useSysTrash);
             }
@@ -640,7 +684,9 @@ export default class LocalImagesPlugin extends Plugin {
         }
 
         showBalloon(
-          filesToRemove.length + " unlinked attachment(s) " + msg,
+          isChinese
+            ? `${filesToRemove.length} 个未关联附件${msg}`
+            : filesToRemove.length + " unlinked attachment(s) " + msg,
           this.settings.showNotifications
         );
       }

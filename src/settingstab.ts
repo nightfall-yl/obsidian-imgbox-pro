@@ -50,6 +50,14 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
       "对新粘贴或拖入的附件使用 YYYYMMDD-HHmmss-md5前6位 命名，同时保留去重能力。",
     localizeTitle: "图片本地化",
     localizeDesc: "控制附件下载、压缩、命名和保存路径。",
+    subgroupDownloadTitle: "下载行为",
+    subgroupDownloadDesc: "配置附件下载的重试策略、文件类型过滤和大小限制。",
+    subgroupCompressionTitle: "图片压缩",
+    subgroupCompressionDesc: "启用并配置图片压缩功能，减小存储体积。",
+    subgroupNamingTitle: "命名与链接",
+    subgroupNamingDesc: "设置新附件的命名规则和 Markdown 链接格式。",
+    subgroupStorageTitle: "存储路径",
+    subgroupStorageDesc: "选择附件保存位置和媒体文件夹结构。",
     downloadRetryCount: "单个附件重试次数",
     downloadRetryCountDesc: "下载附件失败时的重试次数。",
     downloadRetryCountInvalid: "请输入 1 到 6 之间的正整数！",
@@ -100,6 +108,7 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     deletePermanent: "永久删除",
     deleteObsidianTrash: "移动到 Obsidian 回收站",
     deleteSystemTrash: "移动到系统回收站",
+    deletePermanentWarning: "⚠ 永久删除不可恢复！请谨慎操作。",
     showOperationLogs: "显示操作日志弹窗",
     showOperationLogsDesc: "操作完成后弹出包含操作详情的日志窗口。",
     excludeSubfolders: "清理时排除子文件夹",
@@ -159,6 +168,14 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
       "Rename newly pasted or dropped attachments as YYYYMMDD-HHmmss-md5-first-6 while keeping deduplication.",
     localizeTitle: "Image Localization",
     localizeDesc: "Control downloading, compression, naming, and storage paths for attachments.",
+    subgroupDownloadTitle: "Download Behavior",
+    subgroupDownloadDesc: "Configure retry strategy, file type filtering, and size limits for attachment downloads.",
+    subgroupCompressionTitle: "Image Compression",
+    subgroupCompressionDesc: "Enable and configure image compression to reduce storage size.",
+    subgroupNamingTitle: "Naming & Links",
+    subgroupNamingDesc: "Set naming rules for new attachments and Markdown link formats.",
+    subgroupStorageTitle: "Storage Path",
+    subgroupStorageDesc: "Choose attachment save location and media folder structure.",
     downloadRetryCount: "Retry count per attachment",
     downloadRetryCountDesc: "How many times to retry when attachment downloads fail.",
     downloadRetryCountInvalid: "Please enter an integer between 1 and 6.",
@@ -216,6 +233,7 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     deletePermanent: "Delete permanently",
     deleteObsidianTrash: "Move to Obsidian Trash",
     deleteSystemTrash: "Move to System Trash",
+    deletePermanentWarning: "⚠ Permanent deletion cannot be undone! Please be careful.",
     showOperationLogs: "Show operation log modal",
     showOperationLogsDesc: "Show a log modal with details after operations complete.",
     excludeSubfolders: "Exclude subfolders during cleanup",
@@ -272,6 +290,40 @@ export default class SettingTab extends PluginSettingTab {
     });
   }
 
+  private updateDeleteDangerWarning(
+    warningEl: HTMLElement,
+    value: string,
+    t: (key: string) => string
+  ): void {
+    if (value === "permanent") {
+      warningEl.style.display = "flex";
+      warningEl.setText(t("deletePermanentWarning"));
+    } else {
+      warningEl.style.display = "none";
+    }
+  }
+
+  private toggleCompressionOptions(containerEl: HTMLElement, isVisible: boolean): void {
+    if (isVisible) {
+      containerEl.removeClass("is-hidden");
+      containerEl.style.display = "";
+      containerEl.style.maxHeight = containerEl.scrollHeight + "px";
+      containerEl.style.opacity = "1";
+      containerEl.style.marginTop = "";
+    } else {
+      containerEl.addClass("is-hidden");
+      containerEl.style.maxHeight = "0";
+      containerEl.style.opacity = "0";
+      containerEl.style.marginTop = "0";
+      containerEl.style.overflow = "hidden";
+      setTimeout(() => {
+        if (containerEl.hasClass("is-hidden")) {
+          containerEl.style.display = "none";
+        }
+      }, 200);
+    }
+  }
+
   private addNumberSetting(
     containerEl: HTMLElement,
     options: {
@@ -315,6 +367,10 @@ export default class SettingTab extends PluginSettingTab {
           await options.onValidChange(numberValue);
         })
       );
+  }
+
+  private createSettingGroup(containerEl: HTMLElement): HTMLElement {
+    return containerEl.createDiv({ cls: "lip-settings-group" });
   }
 
   display(): void {
@@ -367,8 +423,9 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 通用 =====================
     const generalEl = sectionEls.get("general")!;
+    const generalGroupEl = this.createSettingGroup(generalEl);
 
-    new Setting(generalEl)
+    new Setting(generalGroupEl)
       .setName(t("showNotifications"))
       .setDesc(t("showNotificationsDesc"))
       .addToggle((toggle) =>
@@ -378,7 +435,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(generalEl)
+    new Setting(generalGroupEl)
       .setName(t("showCleanupRibbon"))
       .setDesc(t("showCleanupRibbonDesc"))
       .addToggle((toggle) =>
@@ -389,7 +446,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(generalEl)
+    new Setting(generalGroupEl)
       .setName(t("autoProcess"))
       .setDesc(t("autoProcessDesc"))
       .addToggle((toggle) =>
@@ -400,7 +457,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    this.addNumberSetting(generalEl, {
+    this.addNumberSetting(generalGroupEl, {
       name: t("autoProcessInterval"),
       desc: t("autoProcessIntervalDesc"),
       value: this.plugin.settings.autoProcessInterval,
@@ -415,7 +472,7 @@ export default class SettingTab extends PluginSettingTab {
       invalidMessage: t("autoProcessIntervalInvalid"),
     });
 
-    new Setting(generalEl)
+    new Setting(generalGroupEl)
       .setName(t("processNewMarkdown"))
       .setDesc(t("processNewMarkdownDesc"))
       .addToggle((toggle) =>
@@ -425,34 +482,8 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    const toolsDetailsEl = generalEl.createDiv({
-      cls: "lip-settings-collapsible",
-    });
-    const toolsSummaryEl = toolsDetailsEl.createDiv({
-      cls: "lip-settings-collapsible-summary",
-      attr: {
-        role: "button",
-        tabindex: "0",
-        "aria-expanded": "false",
-      },
-    });
-    const toolsSummaryCopy = toolsSummaryEl.createDiv({
-      cls: "lip-settings-collapsible-copy",
-    });
-    toolsSummaryCopy.createSpan({
-      cls: "lip-settings-collapsible-title",
-      text: t("toolsTitle"),
-    });
-    toolsSummaryCopy.createEl("p", {
-      cls: "lip-settings-collapsible-desc",
-      text: t("toolsDesc"),
-    });
-    const toolsContentEl = toolsDetailsEl.createDiv({
-      cls: "lip-settings-collapsible-content",
-    });
-    toolsContentEl.hide();
-
-    new Setting(toolsContentEl)
+    // ---- 批量命令（直接显示）----
+    new Setting(generalGroupEl)
       .setName(t("showBatchCommands"))
       .setDesc(t("showBatchCommandsDesc"))
       .addToggle((toggle) =>
@@ -462,52 +493,42 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    // 开发者选项（折叠区域）
-    const advancedDetailsEl = generalEl.createDiv({
-      cls: "lip-settings-collapsible",
-    });
-    const advancedSummaryEl = advancedDetailsEl.createDiv({
-      cls: "lip-settings-collapsible-summary",
-      attr: {
-        role: "button",
-        tabindex: "0",
-        "aria-expanded": "false",
-      },
-    });
-    const advancedSummaryCopy = advancedSummaryEl.createDiv({
-      cls: "lip-settings-collapsible-copy",
-    });
-    advancedSummaryCopy.createSpan({
-      cls: "lip-settings-collapsible-title",
-      text: t("advancedTitle"),
-    });
-    advancedSummaryCopy.createEl("p", {
-      cls: "lip-settings-collapsible-desc",
-      text: t("advancedDesc"),
-    });
-    const advancedContentEl = advancedDetailsEl.createDiv({
-      cls: "lip-settings-collapsible-content",
-    });
-    advancedContentEl.hide();
+    // ---- 开发者选项（直接显示）----
+    new Setting(generalGroupEl)
+      .setName(t("debugMode"))
+      .setDesc(t("debugModeDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(isDebugMode()).onChange(async (value) => {
+          setDebugMode(value);
+          await this.plugin.saveSettings();
+        })
+      );
 
     // ===================== 图片本地化 =====================
     const localizeEl = sectionEls.get("localize")!;
 
-    this.addNumberSetting(localizeEl, {
-      name: t("downloadRetryCount"),
-      desc: t("downloadRetryCountDesc"),
-      value: this.plugin.settings.downloadRetryCount,
-      min: 1,
-      max: 6,
-      integer: true,
-      onValidChange: async (value) => {
-        this.plugin.settings.downloadRetryCount = value;
-        await this.plugin.saveSettings();
-      },
-      invalidMessage: t("downloadRetryCountInvalid"),
-    });
+    // ── 下载行为 ──
+    localizeEl.createEl("h3", { text: t("subgroupDownloadTitle"), cls: "lip-settings-subgroup-title" });
+    const downloadGroupEl = this.createSettingGroup(localizeEl);
 
-    new Setting(localizeEl)
+    new Setting(downloadGroupEl)
+      .setName(t("downloadRetryCount"))
+      .setDesc(t("downloadRetryCountDesc"))
+      .addText((text) =>
+        text
+          .setValue(String(this.plugin.settings.downloadRetryCount))
+          .onChange(async (value: string) => {
+            const num = Number(value.trim());
+            if (!Number.isInteger(num) || num < 1 || num > 6) {
+              displayError(t("downloadRetryCountInvalid"));
+              return;
+            }
+            this.plugin.settings.downloadRetryCount = num;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(downloadGroupEl)
       .setName(t("processNewAttachments"))
       .setDesc(t("processNewAttachmentsDesc"))
       .addToggle((toggle) =>
@@ -517,7 +538,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(downloadGroupEl)
       .setName(t("downloadUnknownTypes"))
       .setDesc(t("downloadUnknownTypesDesc"))
       .addToggle((toggle) =>
@@ -527,17 +548,43 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(downloadGroupEl)
+      .setName(t("minFileSizeKB"))
+      .setDesc(t("minFileSizeKBDesc"))
+      .addText((text) =>
+        text
+          .setValue(String(this.plugin.settings.minFileSizeKB))
+          .onChange(async (value: string) => {
+            const num = Number(value.trim());
+            if (!Number.isInteger(num) || num < 0) {
+              displayError(t("positiveIntegerInvalid"));
+              return;
+            }
+            this.plugin.settings.minFileSizeKB = num;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    // ── 图片压缩 ──
+    localizeEl.createEl("h3", { text: t("subgroupCompressionTitle"), cls: "lip-settings-subgroup-title" });
+    const compressionGroupEl = this.createSettingGroup(localizeEl);
+
+    new Setting(compressionGroupEl)
       .setName(t("compressImage"))
       .setDesc(t("compressImageDesc"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.compressImage).onChange(async (value) => {
           this.plugin.settings.compressImage = value;
           await this.plugin.saveSettings();
+          this.toggleCompressionOptions(compressionOptionsEl, value);
         })
       );
 
-    new Setting(localizeEl)
+    const compressionOptionsEl = compressionGroupEl.createDiv({
+      cls: "lip-settings-dependent",
+    });
+
+    new Setting(compressionOptionsEl)
       .setName(t("compressionFormat"))
       .setDesc(t("compressionFormatDesc"))
       .addDropdown((dropdown) => {
@@ -551,34 +598,24 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    this.addNumberSetting(localizeEl, {
-      name: t("compressionQuality"),
-      desc: t("compressionQualityDesc"),
-      value: this.plugin.settings.compressionQuality,
-      min: 10,
-      max: 100,
-      integer: true,
-      onValidChange: async (value) => {
-        this.plugin.settings.compressionQuality = value;
-        await this.plugin.saveSettings();
-      },
-      invalidMessage: t("compressionQualityInvalid"),
-    });
+    new Setting(compressionOptionsEl)
+      .setName(t("compressionQuality"))
+      .setDesc(t("compressionQualityDesc"))
+      .addText((text) =>
+        text
+          .setValue(String(this.plugin.settings.compressionQuality))
+          .onChange(async (value: string) => {
+            const num = Number(value.trim());
+            if (!Number.isInteger(num) || num < 10 || num > 100) {
+              displayError(t("compressionQualityInvalid"));
+              return;
+            }
+            this.plugin.settings.compressionQuality = num;
+            await this.plugin.saveSettings();
+          })
+      );
 
-    this.addNumberSetting(localizeEl, {
-      name: t("minFileSizeKB"),
-      desc: t("minFileSizeKBDesc"),
-      value: this.plugin.settings.minFileSizeKB,
-      min: 0,
-      integer: true,
-      onValidChange: async (value) => {
-        this.plugin.settings.minFileSizeKB = value;
-        await this.plugin.saveSettings();
-      },
-      invalidMessage: t("positiveIntegerInvalid"),
-    });
-
-    new Setting(localizeEl)
+    new Setting(compressionGroupEl)
       .setName(t("excludedExtensions"))
       .setDesc(t("excludedExtensionsDesc"))
       .addText((text) =>
@@ -588,7 +625,13 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    this.toggleCompressionOptions(compressionOptionsEl, this.plugin.settings.compressImage);
+
+    // ── 命名与链接 ──
+    localizeEl.createEl("h3", { text: t("subgroupNamingTitle"), cls: "lip-settings-subgroup-title" });
+    const namingGroupEl = this.createSettingGroup(localizeEl);
+
+    new Setting(namingGroupEl)
       .setName(t("useTimestampNaming"))
       .setDesc(t("useTimestampNamingDesc"))
       .addToggle((toggle) =>
@@ -598,7 +641,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(namingGroupEl)
       .setName(t("preserveCaptions"))
       .setDesc(t("preserveCaptionsDesc"))
       .addToggle((toggle) =>
@@ -608,7 +651,40 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
+    new Setting(namingGroupEl)
+      .setName(t("linkPathFormat"))
+      .setDesc(t("linkPathFormatDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("fullDirPath", t("fullPath"))
+          .addOption("onlyRelative", t("relativePath"))
+          .addOption("baseFileName", t("filenameOnly"))
+          .setValue(this.plugin.settings.linkPathFormat)
+          .onChange(async (value) => {
+            this.plugin.settings.linkPathFormat = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(namingGroupEl)
+      .setName(t("dateFormat"))
+      .setDesc(t("dateFormatDesc"))
+      .addText((text) =>
+        text.setValue(this.plugin.settings.dateFormat).onChange(async (value) => {
+          if (value.match(/(\)|\(|\"|\'|\#|\]|\[|\:|\>|\<|\*|\|)/g) !== null) {
+            displayError(t("unsafeFolderName"));
+            return;
+          }
+          this.plugin.settings.dateFormat = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    // ── 存储路径 ──
+    localizeEl.createEl("h3", { text: t("subgroupStorageTitle"), cls: "lip-settings-subgroup-title" });
+    const storageGroupEl = this.createSettingGroup(localizeEl);
+
+    new Setting(storageGroupEl)
       .setName(t("attachmentSaveLocation"))
       .setDesc(t("attachmentSaveLocationDesc"))
       .addDropdown((dropdown) =>
@@ -624,7 +700,7 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(localizeEl)
+    new Setting(storageGroupEl)
       .setName(t("mediaFolderPath"))
       .setDesc(t("mediaFolderPathDesc"))
       .setClass("media_folder_set")
@@ -639,83 +715,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeEl)
-      .setName(t("linkPathFormat"))
-      .setDesc(t("linkPathFormatDesc"))
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("fullDirPath", t("fullPath"))
-          .addOption("onlyRelative", t("relativePath"))
-          .addOption("baseFileName", t("filenameOnly"))
-          .setValue(this.plugin.settings.linkPathFormat)
-          .onChange(async (value) => {
-            this.plugin.settings.linkPathFormat = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(localizeEl)
-      .setName(t("dateFormat"))
-      .setDesc(t("dateFormatDesc"))
-      .addText((text) =>
-        text.setValue(this.plugin.settings.dateFormat).onChange(async (value) => {
-          if (value.match(/(\)|\(|\"|\'|\#|\]|\[|\:|\>|\<|\*|\|)/g) !== null) {
-            displayError(t("unsafeFolderName"));
-            return;
-          }
-          this.plugin.settings.dateFormat = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(localizeEl)
-      .setName(t("preserveCaptions"))
-      .setDesc(t("preserveCaptionsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.preserveCaptions).onChange(async (value) => {
-          this.plugin.settings.preserveCaptions = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    const localizeAdvancedDetailsEl = localizeEl.createDiv({
-      cls: "lip-settings-collapsible",
-    });
-    const localizeAdvancedSummaryEl = localizeAdvancedDetailsEl.createDiv({
-      cls: "lip-settings-collapsible-summary",
-      attr: {
-        role: "button",
-        tabindex: "0",
-        "aria-expanded": "false",
-      },
-    });
-    const localizeAdvancedSummaryCopy = localizeAdvancedSummaryEl.createDiv({
-      cls: "lip-settings-collapsible-copy",
-    });
-    localizeAdvancedSummaryCopy.createSpan({
-      cls: "lip-settings-collapsible-title",
-      text: t("localizeAdvancedTitle"),
-    });
-    localizeAdvancedSummaryCopy.createEl("p", {
-      cls: "lip-settings-collapsible-desc",
-      text: t("localizeAdvancedDesc"),
-    });
-    const localizeAdvancedContentEl = localizeAdvancedDetailsEl.createDiv({
-      cls: "lip-settings-collapsible-content",
-    });
-    localizeAdvancedContentEl.hide();
-
-    new Setting(localizeAdvancedContentEl)
-      .setName(t("appendOriginalName"))
-      .setDesc(t("appendOriginalNameDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.appendOriginalName).onChange(async (value) => {
-          this.plugin.settings.appendOriginalName = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(localizeAdvancedContentEl)
+    new Setting(storageGroupEl)
       .setName(t("syncMediaFolder"))
       .setDesc(t("syncMediaFolderDesc"))
       .setClass("media_folder_set")
@@ -726,7 +726,21 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(localizeAdvancedContentEl)
+    // ── 高级选项 ──
+    localizeEl.createEl("h3", { text: t("localizeAdvancedTitle"), cls: "lip-settings-subgroup-title" });
+    const advancedGroupEl = this.createSettingGroup(localizeEl);
+
+    new Setting(advancedGroupEl)
+      .setName(t("appendOriginalName"))
+      .setDesc(t("appendOriginalNameDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.appendOriginalName).onChange(async (value) => {
+          this.plugin.settings.appendOriginalName = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(advancedGroupEl)
       .setName(t("skipObsidianFolderCreation"))
       .setDesc(t("skipObsidianFolderCreationDesc"))
       .addToggle((toggle) =>
@@ -738,8 +752,9 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 图片预览 =====================
     const previewEl = sectionEls.get("preview")!;
+    const previewGroupEl = this.createSettingGroup(previewEl);
 
-    new Setting(previewEl)
+    new Setting(previewGroupEl)
       .setName(t("clickPreviewEnabled"))
       .setDesc(t("clickPreviewEnabledDesc"))
       .addToggle((toggle) =>
@@ -749,7 +764,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(previewEl)
+    new Setting(previewGroupEl)
       .setName(t("previewAdaptiveRatio"))
       .setDesc(t("previewAdaptiveRatioDesc"))
       .addSlider((slider) => {
@@ -764,7 +779,7 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    new Setting(previewEl)
+    new Setting(previewGroupEl)
       .setName(t("dragResizeEnabled"))
       .setDesc(t("dragResizeEnabledDesc"))
       .addToggle((toggle) =>
@@ -774,7 +789,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    this.addNumberSetting(previewEl, {
+    this.addNumberSetting(previewGroupEl, {
       name: t("dragResizeStep"),
       desc: t("dragResizeStepDesc"),
       value: this.plugin.settings.dragResizeStep,
@@ -791,7 +806,9 @@ export default class SettingTab extends PluginSettingTab {
     // ===================== 图片清理 =====================
     const cleanupEl = sectionEls.get("cleanup")!;
 
-    new Setting(cleanupEl)
+    const cleanupGroupEl = this.createSettingGroup(cleanupEl);
+
+    new Setting(cleanupGroupEl)
       .setName(t("deleteDestination"))
       .setDesc(t("deleteDestinationDesc"))
       .addDropdown((dropdown) => {
@@ -806,7 +823,7 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    new Setting(cleanupEl)
+    new Setting(cleanupGroupEl)
       .setName(t("showOperationLogs"))
       .setDesc(t("showOperationLogsDesc"))
       .addToggle((toggle) =>
@@ -816,7 +833,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(cleanupEl)
+    new Setting(cleanupGroupEl)
       .setName(t("excludedFolders"))
       .setDesc(t("excludedFoldersDesc"))
       .addTextArea((text) => {
@@ -851,7 +868,7 @@ export default class SettingTab extends PluginSettingTab {
         text.inputEl.style.width = "100%";
       });
 
-    new Setting(cleanupEl)
+    new Setting(cleanupGroupEl)
       .setName(t("excludeSubfolders"))
       .setDesc(t("excludeSubfoldersDesc"))
       .addToggle((toggle) =>
@@ -860,74 +877,6 @@ export default class SettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         })
       );
-
-    // ===================== 开发者选项（折叠内容） =====================
-    new Setting(advancedContentEl)
-      .setName(t("debugMode"))
-      .setDesc(t("debugModeDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(isDebugMode()).onChange(async (value) => {
-          setDebugMode(value);
-          await this.plugin.saveSettings();
-        })
-      );
-
-    advancedSummaryEl.addEventListener("click", () => {
-      const isOpen = !advancedDetailsEl.hasClass("is-open");
-      advancedDetailsEl.toggleClass("is-open", isOpen);
-      advancedSummaryEl.toggleClass("is-open", isOpen);
-      advancedSummaryEl.setAttr("aria-expanded", isOpen ? "true" : "false");
-      if (isOpen) {
-        advancedContentEl.show();
-      } else {
-        advancedContentEl.hide();
-      }
-    });
-    advancedSummaryEl.addEventListener("keydown", (evt) => {
-      if (evt.key !== "Enter" && evt.key !== " ") {
-        return;
-      }
-      evt.preventDefault();
-      advancedSummaryEl.click();
-    });
-
-    toolsSummaryEl.addEventListener("click", () => {
-      const isOpen = !toolsDetailsEl.hasClass("is-open");
-      toolsDetailsEl.toggleClass("is-open", isOpen);
-      toolsSummaryEl.toggleClass("is-open", isOpen);
-      toolsSummaryEl.setAttr("aria-expanded", isOpen ? "true" : "false");
-      if (isOpen) {
-        toolsContentEl.show();
-      } else {
-        toolsContentEl.hide();
-      }
-    });
-    toolsSummaryEl.addEventListener("keydown", (evt) => {
-      if (evt.key !== "Enter" && evt.key !== " ") {
-        return;
-      }
-      evt.preventDefault();
-      toolsSummaryEl.click();
-    });
-
-    localizeAdvancedSummaryEl.addEventListener("click", () => {
-      const isOpen = !localizeAdvancedDetailsEl.hasClass("is-open");
-      localizeAdvancedDetailsEl.toggleClass("is-open", isOpen);
-      localizeAdvancedSummaryEl.toggleClass("is-open", isOpen);
-      localizeAdvancedSummaryEl.setAttr("aria-expanded", isOpen ? "true" : "false");
-      if (isOpen) {
-        localizeAdvancedContentEl.show();
-      } else {
-        localizeAdvancedContentEl.hide();
-      }
-    });
-    localizeAdvancedSummaryEl.addEventListener("keydown", (evt) => {
-      if (evt.key !== "Enter" && evt.key !== " ") {
-        return;
-      }
-      evt.preventDefault();
-      localizeAdvancedSummaryEl.click();
-    });
 
     this.toggleMediaFolderSettings(localizeEl);
   }
