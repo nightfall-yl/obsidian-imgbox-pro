@@ -24,13 +24,8 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     navLocalize: "图片本地化",
     navPreview: "图片预览",
     navCleanup: "图片清理",
-    navAdvanced: "开发者选项",
-    generalTitle: "通用",
-    generalDesc: "插件显示与自动处理相关选项。",
     showNotifications: "显示通知",
     showNotificationsDesc: "处理页面后显示通知。",
-    toolsTitle: "批量命令",
-    toolsDesc: "控制批量命令的显示。",
     showBatchCommands: "显示批量命令",
     showBatchCommandsDesc: "重新加载插件后，显示批量本地化和当前笔记目录清理等批量命令。",
     showCleanupRibbon: "显示图片清理 Ribbon 图标",
@@ -48,16 +43,10 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     useTimestampNaming: "新附件使用时间+MD5命名",
     useTimestampNamingDesc:
       "对新粘贴或拖入的附件使用 YYYYMMDD-HHmmss-md5前6位 命名，同时保留去重能力。",
-    localizeTitle: "图片本地化",
-    localizeDesc: "控制附件下载、压缩、命名和保存路径。",
     subgroupDownloadTitle: "下载行为",
-    subgroupDownloadDesc: "配置附件下载的重试策略、文件类型过滤和大小限制。",
     subgroupCompressionTitle: "图片压缩",
-    subgroupCompressionDesc: "启用并配置图片压缩功能，减小存储体积。",
     subgroupNamingTitle: "命名与链接",
-    subgroupNamingDesc: "设置新附件的命名规则和 Markdown 链接格式。",
     subgroupStorageTitle: "存储路径",
-    subgroupStorageDesc: "选择附件保存位置和媒体文件夹结构。",
     downloadRetryCount: "单个附件重试次数",
     downloadRetryCountDesc: "下载附件失败时的重试次数。",
     downloadRetryCountInvalid: "请输入 1 到 6 之间的正整数！",
@@ -98,11 +87,8 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     mediaFolderPath: "媒体文件夹",
     mediaFolderPathDesc: "用于存放下载媒体文件的文件夹。",
     localizeAdvancedTitle: "高级选项",
-    localizeAdvancedDesc: "兼容性、附加标签和目录同步等低频选项。",
     skipObsidianFolderCreation: "不创建 Obsidian 附件文件夹",
     skipObsidianFolderCreationDesc: "用于兼容其他插件，但可能导致部分工作流行为异常。",
-    cleanupTitle: "图片清理",
-    cleanupDesc: "管理未使用附件清理与未关联附件移除行为。",
     deleteDestination: "删除去向",
     deleteDestinationDesc: "选择删除未使用图片、附件或笔记时的文件去向。",
     deletePermanent: "永久删除",
@@ -117,8 +103,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     excludedFolders: "排除文件夹",
     excludedFoldersDesc: "这些文件夹中的文件不会被自动处理，\u201c图片清理\u201d也会跳过它们。",
     excludedFoldersPlaceholder: "每行输入一个完整路径，例如 RootFolder/Subfolder",
-    previewTitle: "图片预览",
-    previewDesc: "右键菜单、拖拽缩放和点击看大图等图片预览增强功能。",
     clickPreviewEnabled: "单击预览图片",
     clickPreviewEnabledDesc:
       "单击图片中间区域可打开可缩放的预览视图，再次单击可关闭预览；边缘区域保留给尺寸调整。",
@@ -130,8 +114,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     dragResizeStep: "缩放步进",
     dragResizeStepDesc: "拖拽缩放时的最小刻度。设为 0 表示不启用对齐。",
     dragResizeStepInvalid: "请输入正整数或 0。",
-    advancedTitle: "开发者选项",
-    advancedDesc: "开发调试与底层处理规则相关选项。",
     debugMode: "调试模式",
     debugModeDesc: "在控制台输出插件调试信息。",
   },
@@ -140,13 +122,8 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     navLocalize: "Localize",
     navPreview: "Preview",
     navCleanup: "Cleanup",
-    navAdvanced: "Developer Options",
-    generalTitle: "General",
-    generalDesc: "Plugin display and automatic processing options.",
     showNotifications: "Show notifications",
     showNotificationsDesc: "Show notifications after pages are processed.",
-    toolsTitle: "Batch Commands",
-    toolsDesc: "Control whether batch commands are shown.",
     showBatchCommands: "Show batch commands",
     showBatchCommandsDesc:
       "After reloading the plugin, show batch localization and current-note-folder cleanup commands.",
@@ -166,16 +143,10 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     useTimestampNaming: "Use time + MD5 names for new attachments",
     useTimestampNamingDesc:
       "Rename newly pasted or dropped attachments as YYYYMMDD-HHmmss-md5-first-6 while keeping deduplication.",
-    localizeTitle: "Image Localization",
-    localizeDesc: "Control downloading, compression, naming, and storage paths for attachments.",
     subgroupDownloadTitle: "Download Behavior",
-    subgroupDownloadDesc: "Configure retry strategy, file type filtering, and size limits for attachment downloads.",
     subgroupCompressionTitle: "Image Compression",
-    subgroupCompressionDesc: "Enable and configure image compression to reduce storage size.",
     subgroupNamingTitle: "Naming & Links",
-    subgroupNamingDesc: "Set naming rules for new attachments and Markdown link formats.",
     subgroupStorageTitle: "Storage Path",
-    subgroupStorageDesc: "Choose attachment save location and media folder structure.",
     downloadRetryCount: "Retry count per attachment",
     downloadRetryCountDesc: "How many times to retry when attachment downloads fail.",
     downloadRetryCountInvalid: "Please enter an integer between 1 and 6.",
@@ -221,12 +192,9 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     mediaFolderPath: "Media folder",
     mediaFolderPathDesc: "Folder used to store downloaded media files.",
     localizeAdvancedTitle: "Advanced options",
-    localizeAdvancedDesc: "Low-frequency options for compatibility, extra labels, and folder sync.",
     skipObsidianFolderCreation: "Do not create Obsidian attachment folder",
     skipObsidianFolderCreationDesc:
       "Improves compatibility with other plugins, but may affect some workflows.",
-    cleanupTitle: "Image Cleanup",
-    cleanupDesc: "Manage unused attachment cleanup and unlinked attachment cleanup.",
     deleteDestination: "Delete destination",
     deleteDestinationDesc:
       "Choose where deleted files go when removing unused images, attachments, or notes.",
@@ -243,8 +211,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     excludedFoldersDesc:
       "Files inside these folders will not be processed automatically, and image cleanup will skip them too.",
     excludedFoldersPlaceholder: "Enter one full path per line, for example RootFolder/Subfolder",
-    previewTitle: "Image Preview",
-    previewDesc: "Enhancements for right-click menus, drag resizing, and click-to-zoom previews.",
     clickPreviewEnabled: "Click to preview image",
     clickPreviewEnabledDesc:
       "Click the center area of an image to open a zoomable preview, and click again to close it. The edges stay available for resizing.",
@@ -258,8 +224,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     dragResizeStep: "Resize step",
     dragResizeStepDesc: "Minimum resize step when dragging. Set 0 to disable snapping.",
     dragResizeStepInvalid: "Please enter a positive integer or 0.",
-    advancedTitle: "Developer Options",
-    advancedDesc: "Developer-facing debugging and low-level processing options.",
     debugMode: "Debug mode",
     debugModeDesc: "Output plugin debug information to the console.",
   },
@@ -506,7 +470,6 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 图片本地化 =====================
     const localizeEl = sectionEls.get("localize")!;
-    const localizeGroupEl = this.createSettingGroup(localizeEl);
 
     // ── 下载行为 ──
     localizeEl.createEl("h3", { text: t("subgroupDownloadTitle"), cls: "lip-settings-subgroup-title" });
@@ -527,16 +490,6 @@ export default class SettingTab extends PluginSettingTab {
             this.plugin.settings.downloadRetryCount = num;
             await this.plugin.saveSettings();
           })
-      );
-
-    new Setting(downloadGroupEl)
-      .setName(t("processNewAttachments"))
-      .setDesc(t("processNewAttachmentsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.processNewAttachments).onChange(async (value) => {
-          this.plugin.settings.processNewAttachments = value;
-          await this.plugin.saveSettings();
-        })
       );
 
     new Setting(downloadGroupEl)
@@ -564,6 +517,16 @@ export default class SettingTab extends PluginSettingTab {
             this.plugin.settings.minFileSizeKB = num;
             await this.plugin.saveSettings();
           })
+      );
+
+    new Setting(downloadGroupEl)
+      .setName(t("excludedExtensions"))
+      .setDesc(t("excludedExtensionsDesc"))
+      .addText((text) =>
+        text.setValue(this.plugin.settings.excludedExtensions).onChange(async (value) => {
+          this.plugin.settings.excludedExtensions = value;
+          await this.plugin.saveSettings();
+        })
       );
 
     // ── 图片压缩 ──
@@ -616,16 +579,6 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(compressionGroupEl)
-      .setName(t("excludedExtensions"))
-      .setDesc(t("excludedExtensionsDesc"))
-      .addText((text) =>
-        text.setValue(this.plugin.settings.excludedExtensions).onChange(async (value) => {
-          this.plugin.settings.excludedExtensions = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
     this.toggleCompressionOptions(compressionOptionsEl, this.plugin.settings.compressImage);
 
     // ── 命名与链接 ──
@@ -667,23 +620,19 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(namingGroupEl)
-      .setName(t("dateFormat"))
-      .setDesc(t("dateFormatDesc"))
-      .addText((text) =>
-        text.setValue(this.plugin.settings.dateFormat).onChange(async (value) => {
-          if (value.match(/(\)|\(|\"|\'|\#|\]|\[|\:|\>|\<|\*|\|)/g) !== null) {
-            displayError(t("unsafeFolderName"));
-            return;
-          }
-          this.plugin.settings.dateFormat = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
     // ── 存储路径 ──
     localizeEl.createEl("h3", { text: t("subgroupStorageTitle"), cls: "lip-settings-subgroup-title" });
     const storageGroupEl = this.createSettingGroup(localizeEl);
+
+    new Setting(storageGroupEl)
+      .setName(t("processNewAttachments"))
+      .setDesc(t("processNewAttachmentsDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.processNewAttachments).onChange(async (value) => {
+          this.plugin.settings.processNewAttachments = value;
+          await this.plugin.saveSettings();
+        })
+      );
 
     new Setting(storageGroupEl)
       .setName(t("attachmentSaveLocation"))
@@ -712,6 +661,20 @@ export default class SettingTab extends PluginSettingTab {
             return;
           }
           this.plugin.settings.mediaFolderPath = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(storageGroupEl)
+      .setName(t("dateFormat"))
+      .setDesc(t("dateFormatDesc"))
+      .addText((text) =>
+        text.setValue(this.plugin.settings.dateFormat).onChange(async (value) => {
+          if (value.match(/(\)|\(|\"|\'|\#|\]|\[|\:|\>|\<|\*|\|)/g) !== null) {
+            displayError(t("unsafeFolderName"));
+            return;
+          }
+          this.plugin.settings.dateFormat = value;
           await this.plugin.saveSettings();
         })
       );
@@ -820,8 +783,14 @@ export default class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.deleteDestination = value;
             await this.plugin.saveSettings();
+            this.updateDeleteDangerWarning(deleteWarningEl, value, t);
           });
       });
+
+    const deleteWarningEl = cleanupGroupEl.createDiv({
+      cls: "lip-settings-danger-warning",
+    });
+    this.updateDeleteDangerWarning(deleteWarningEl, this.plugin.settings.deleteDestination, t);
 
     new Setting(cleanupGroupEl)
       .setName(t("showOperationLogs"))

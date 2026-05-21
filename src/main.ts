@@ -418,7 +418,11 @@ export default class LocalImagesPlugin extends Plugin {
     return null;
   }
 
-  private async processPage(file: TFile, defaultdir: boolean = false): Promise<any> {
+  private async processPage(
+    file: TFile,
+    defaultdir: boolean = false,
+    options: { notifyWhenUnchanged?: boolean } = {}
+  ): Promise<any> {
     if (file == null) {
       return null;
     }
@@ -459,7 +463,7 @@ export default class LocalImagesPlugin extends Plugin {
         this.settings.showNotifications
       );
     } else {
-      if (this.settings.showNotifications) {
+      if (options.notifyWhenUnchanged ?? true) {
         showBalloon(
           `Page "${file.path}" has been processed, but nothing was changed.`,
           this.settings.showNotifications
@@ -1012,7 +1016,7 @@ export default class LocalImagesPlugin extends Plugin {
   processModifiedQueue = async () => {
     const iteration = this.modifiedQueue.iterationQueue();
     for (const page of iteration) {
-      this.processPage(page, false);
+      this.processPage(page, false, { notifyWhenUnchanged: false });
     }
   };
 
