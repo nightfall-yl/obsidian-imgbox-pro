@@ -3,7 +3,7 @@ import { ISettings } from "./config";
 import { getAllLinkMatchesInFile, LinkMatch } from "./clearUnusedLinkDetector";
 import { isChineseDisplayLanguage } from "./previewHelpers";
 
-const imageRegex = /.*(jpe?g|png|gif|svg|bmp|webp|avif)/i;
+const imageRegex = /.*(jpe?g|png|gif|svg|bmp|webp|avif|heic)/i;
 const bannerRegex = /!\[\[(.*?)\]\]/i;
 const imageExtensions: Set<string> = new Set([
   "jpeg",
@@ -14,6 +14,7 @@ const imageExtensions: Set<string> = new Set([
   "bmp",
   "webp",
   "avif",
+  "heic",
 ]);
 
 export const getUnusedAttachments = async (app: App, type: "image" | "all") => {

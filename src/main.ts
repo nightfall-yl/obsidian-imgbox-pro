@@ -81,7 +81,7 @@ export default class LocalImagesPlugin extends Plugin {
           continue;
         }
 
-        if (/\.(jpe?g|png|gif|svg|bmp|webp|avif)(\?.*)?$/i.test(value)) {
+        if (/\.(jpe?g|png|gif|svg|bmp|webp|avif|heic)(\?.*)?$/i.test(value)) {
           attachmentNames.add(pathBasename(value));
         }
       }

@@ -78,7 +78,7 @@ export class PreviewFeature {
   videoWidthWatcher?: VideoDivWidthChangeWatcher;
   highlightedExplorerPath: string | null = null;
   explorerHighlightSuppressTimer: number | null = null;
-  imageExtensions = new Set(["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp", "avif"]);
+  imageExtensions = new Set(["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp", "avif", "heic"]);
   private referencedNotesCache = new Map<string, TFile[]>();
 
   constructor(plugin: LocalImagesPlugin) {

@@ -109,10 +109,11 @@ Mobile:
 | `bmp` | Yes | Yes | Yes | No |
 | `webp` | Yes | Yes | Yes | Yes |
 | `avif` | Yes | Yes | Yes | No |
+| `heic` | Yes | Yes | Yes | No |
 
 Notes:
 
-- `webp` and `avif` are recognized, saved, and cleaned correctly
+- `webp`, `avif`, and `heic` are recognized, saved, and cleaned correctly
 - image compression currently mainly targets `png`
 
 ## Installation

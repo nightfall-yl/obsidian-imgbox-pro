@@ -33,6 +33,7 @@ const IMAGE_MIME_BY_EXTENSION: Record<string, string> = {
   bmp: "image/bmp",
   svg: "image/svg+xml",
   avif: "image/avif",
+  heic: "image/heic",
 };
 
 export function withTimeout<T>(ms: number, promise: Promise<T>): Promise<T> {

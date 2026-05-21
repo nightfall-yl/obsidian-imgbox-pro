@@ -234,8 +234,31 @@ const MAGIC_SIGNATURES: Array<{ bytes: number[]; offset: number; ext: string }> 
   { bytes: [0x1a, 0x45, 0xdf, 0xa3], offset: 0, ext: "mkv" },
   { bytes: [0x4f, 0x67, 0x67, 0x53], offset: 0, ext: "ogg" },
   { bytes: [0x46, 0x4c, 0x56], offset: 0, ext: "flv" },
-  { bytes: [0x66, 0x74, 0x79, 0x70], offset: 4, ext: "mp4" },
 ];
+
+const ISOBMFF_BRANDS: Record<string, string> = {
+  avif: "avif",
+  avis: "avif",
+  heic: "heic",
+  heix: "heic",
+  hevc: "heic",
+  hevx: "heic",
+  mif1: "heic",
+  msf1: "heic",
+  mp41: "mp4",
+  mp42: "mp4",
+  isom: "mp4",
+  M4V: "mp4",
+  M4A: "mp4",
+  M4P: "mp4",
+  avc1: "mp4",
+  dash: "mp4",
+  "qt  ": "mov",
+  "3gp4": "3gp",
+  "3gp5": "3gp",
+  "3g2a": "3gp",
+  caqv : "crx",
+};
 
 function detectExtByMagicNumber(content: ArrayBuffer): string | undefined {
   const header = new Uint8Array(content.slice(0, 32));
@@ -256,6 +279,21 @@ function detectExtByMagicNumber(content: ArrayBuffer): string | undefined {
     const isRIFF = header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46;
     const isWEBP = header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50;
     if (isRIFF && isWEBP) return "webp";
+  }
+
+  if (header.length >= 12) {
+    const isFtyp =
+      header[4] === 0x66 &&
+      header[5] === 0x74 &&
+      header[6] === 0x79 &&
+      header[7] === 0x70;
+    if (isFtyp) {
+      const brand = String.fromCharCode(header[8], header[9], header[10], header[11]);
+      if (ISOBMFF_BRANDS[brand]) {
+        return ISOBMFF_BRANDS[brand];
+      }
+      return "mp4";
+    }
   }
 
   return undefined;
