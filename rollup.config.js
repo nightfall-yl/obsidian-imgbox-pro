@@ -1,4 +1,3 @@
-import { builtinModules } from "node:module";
 import esbuild from "rollup-plugin-esbuild";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import rollupJson from "@rollup/plugin-json";
@@ -7,9 +6,6 @@ import commonjs from "@rollup/plugin-commonjs";
 const isProd = process.env.BUILD === "production";
 const externalModules = [
   "obsidian",
-  "electron",
-  ...builtinModules,
-  ...builtinModules.map((moduleName) => `node:${moduleName}`),
 ];
 
 const banner = `/*
@@ -35,18 +31,11 @@ export default {
       target: "es2021",
       sourceMap: true,
     }),
-    nodeResolve({ browser: false, preferBuiltins: true }),
+    nodeResolve({ browser: true, preferBuiltins: false }),
     rollupJson(),
     commonjs({ sourceMap: false }),
   ],
   onwarn(warning, warn) {
-    // workaround to prevent rollup build error
-    if (
-      warning.code === "EVAL" &&
-      /.*\/node_modules\/file-type\/.*/.test(warning.loc?.file ?? "")
-    ) {
-      return;
-    }
     warn(warning);
   },
 };

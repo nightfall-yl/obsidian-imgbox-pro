@@ -2,7 +2,7 @@
  * 链接更新功能模块
  */
 
-import { MarkdownView } from "obsidian";
+import { MarkdownView, Notice } from "obsidian";
 import { EditorView } from "@codemirror/view";
 
 /**
@@ -47,7 +47,7 @@ export function updateInternalLink(
         },
       });
     } else if (matched.length > 1) {
-      new (require("obsidian").Notice)("当前行中找到多个相同图片链接，请手动调整缩放。");
+      new Notice("当前行中找到多个相同图片链接，请手动调整缩放。");
     }
     return;
   }
@@ -99,7 +99,7 @@ export function updateExternalLink(
         },
       });
     } else if (matched.length > 1) {
-      new (require("obsidian").Notice)("当前行中找到多个相同图片链接，请手动调整缩放。");
+      new Notice("当前行中找到多个相同图片链接，请手动调整缩放。");
     }
     return;
   }
@@ -190,9 +190,9 @@ export function updateGroupedLink(
       });
     }
   } else if (matchedResults.length === 0) {
-    new (require("obsidian").Notice)("未找到当前图片链接，请手动调整缩放。");
+    new Notice("未找到当前图片链接，请手动调整缩放。");
   } else {
-    new (require("obsidian").Notice)("找到多个相同图片链接，请手动调整缩放。");
+    new Notice("找到多个相同图片链接，请手动调整缩放。");
   }
 }
 

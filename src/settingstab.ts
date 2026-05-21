@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting, setIcon } from "obsidian";
+import { App, Notice, Platform, PluginSettingTab, Setting, setIcon } from "obsidian";
 
 import { displayError, logError, trimAny } from "./utils";
 
@@ -106,6 +106,7 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     clickPreviewEnabled: "单击预览图片",
     clickPreviewEnabledDesc:
       "单击图片中间区域可打开可缩放的预览视图，再次单击可关闭预览；边缘区域保留给尺寸调整。",
+    previewMobileDesc: "移动端使用 Obsidian 内置图片查看器，无需额外配置。",
     previewAdaptiveRatio: "自适应显示比例",
     previewAdaptiveRatioDesc: "当预览图片大于窗口时，按设定比例自适应缩放。",
     previewAdaptiveRatioNotice: "自适应比例",
@@ -214,6 +215,7 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     clickPreviewEnabled: "Click to preview image",
     clickPreviewEnabledDesc:
       "Click the center area of an image to open a zoomable preview, and click again to close it. The edges stay available for resizing.",
+    previewMobileDesc: "Mobile uses the built-in Obsidian image viewer. No configuration needed.",
     previewAdaptiveRatio: "Adaptive display ratio",
     previewAdaptiveRatioDesc:
       "When the preview image is larger than the window, scale it adaptively.",
@@ -718,54 +720,59 @@ export default class SettingTab extends PluginSettingTab {
     const previewEl = sectionEls.get("preview")!;
     const previewGroupEl = this.createSettingGroup(previewEl);
 
-    new Setting(previewGroupEl)
-      .setName(t("clickPreviewEnabled"))
-      .setDesc(t("clickPreviewEnabledDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.clickPreviewEnabled).onChange(async (value) => {
-          this.plugin.settings.clickPreviewEnabled = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(previewGroupEl)
-      .setName(t("previewAdaptiveRatio"))
-      .setDesc(t("previewAdaptiveRatioDesc"))
-      .addSlider((slider) => {
-        slider
-          .setLimits(0.1, 1, 0.05)
-          .setValue(this.plugin.settings.previewAdaptiveRatio)
-          .setDynamicTooltip()
-          .onChange(async (value) => {
-            this.plugin.settings.previewAdaptiveRatio = value;
-            new Notice(`${t("previewAdaptiveRatioNotice")}: ${value}`);
+    if (Platform.isDesktop) {
+      new Setting(previewGroupEl)
+        .setName(t("clickPreviewEnabled"))
+        .setDesc(t("clickPreviewEnabledDesc"))
+        .addToggle((toggle) =>
+          toggle.setValue(this.plugin.settings.clickPreviewEnabled).onChange(async (value) => {
+            this.plugin.settings.clickPreviewEnabled = value;
             await this.plugin.saveSettings();
-          });
-      });
+          })
+        );
 
-    new Setting(previewGroupEl)
-      .setName(t("dragResizeEnabled"))
-      .setDesc(t("dragResizeEnabledDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.dragResizeEnabled).onChange(async (value) => {
-          this.plugin.settings.dragResizeEnabled = value;
+      new Setting(previewGroupEl)
+        .setName(t("previewAdaptiveRatio"))
+        .setDesc(t("previewAdaptiveRatioDesc"))
+        .addSlider((slider) => {
+          slider
+            .setLimits(0.1, 1, 0.05)
+            .setValue(this.plugin.settings.previewAdaptiveRatio)
+            .setDynamicTooltip()
+            .onChange(async (value) => {
+              this.plugin.settings.previewAdaptiveRatio = value;
+              new Notice(`${t("previewAdaptiveRatioNotice")}: ${value}`);
+              await this.plugin.saveSettings();
+            });
+        });
+
+      new Setting(previewGroupEl)
+        .setName(t("dragResizeEnabled"))
+        .setDesc(t("dragResizeEnabledDesc"))
+        .addToggle((toggle) =>
+          toggle.setValue(this.plugin.settings.dragResizeEnabled).onChange(async (value) => {
+            this.plugin.settings.dragResizeEnabled = value;
+            await this.plugin.saveSettings();
+          })
+        );
+
+      this.addNumberSetting(previewGroupEl, {
+        name: t("dragResizeStep"),
+        desc: t("dragResizeStepDesc"),
+        value: this.plugin.settings.dragResizeStep,
+        min: 0,
+        integer: true,
+        emptyAs: 0,
+        onValidChange: async (value) => {
+          this.plugin.settings.dragResizeStep = value;
           await this.plugin.saveSettings();
-        })
-      );
-
-    this.addNumberSetting(previewGroupEl, {
-      name: t("dragResizeStep"),
-      desc: t("dragResizeStepDesc"),
-      value: this.plugin.settings.dragResizeStep,
-      min: 0,
-      integer: true,
-      emptyAs: 0,
-      onValidChange: async (value) => {
-        this.plugin.settings.dragResizeStep = value;
-        await this.plugin.saveSettings();
-      },
-      invalidMessage: t("dragResizeStepInvalid"),
-    });
+        },
+        invalidMessage: t("dragResizeStepInvalid"),
+      });
+    } else {
+      new Setting(previewGroupEl)
+        .setDesc(t("previewMobileDesc"));
+    }
 
     // ===================== 图片清理 =====================
     const cleanupEl = sectionEls.get("cleanup")!;

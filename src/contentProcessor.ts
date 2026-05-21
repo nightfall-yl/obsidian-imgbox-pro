@@ -1,11 +1,8 @@
-import { URL } from "url";
-import path from "path";
-import { App, DataAdapter, TFile, Plugin, TFolder } from "obsidian";
+import { App, DataAdapter, Platform, TFile, Plugin, TFolder, requestUrl } from "obsidian";
 
 import {
   isUrl,
   downloadImage,
-  readFromDisk,
   cleanFileName,
   logError,
   trimAny,
@@ -16,9 +13,12 @@ import {
   getFileExt,
   blobToJpegArrayBuffer,
   generateTimestampRandomName,
+  pathBasename,
+  pathParse,
+  pathRelative,
 } from "./utils";
 
-import { ISettings, SUPPORTED_OS } from "./config";
+import { ISettings } from "./config";
 
 import AsyncLock from "async-lock";
 import moment from "moment";
@@ -47,7 +47,6 @@ export function imageTagProcessor(
       let lock = new AsyncLock();
       let fpath;
       let fileData: ArrayBuffer;
-      const opsys = process.platform;
       const mediaDir = await getMDir(app.app, noteFile, settings, defaultdir, unique);
       await app.ensureFolderExists(mediaDir);
       const protocol = link.slice(0, 5);
@@ -57,20 +56,19 @@ export function imageTagProcessor(
         fileData = await base64ToBuff(link);
       } else if (protocol == "file:") {
         logError("Readlocal: \r\n" + fpath, false);
-        if (SUPPORTED_OS.win.includes(opsys)) {
-          fpath = link.replace("file:///", "");
-        } else if (SUPPORTED_OS.unix.includes(opsys)) {
-          fpath = link.replace("file://", "");
+        if (Platform.isDesktop) {
+          try {
+            const res = await requestUrl({ url: link });
+            fileData = res.arrayBuffer;
+          } catch (e) {
+            logError("Cannot read local file via file:// protocol: " + e, false);
+            return null;
+          }
         } else {
-          fpath = link.replace("file://", "");
-        }
-
-        fileData = await readFromDisk(fpath);
-        if (fileData === null) {
-          fileData = await readFromDisk(decodeURI(fpath));
+          logError("file:// protocol is not supported on mobile", false);
+          return null;
         }
       } else {
-        //Try to download several times
         let trycount = 0;
         while (trycount < settings.downloadRetryCount) {
           fileData = await downloadImage(link);
@@ -144,12 +142,10 @@ export function imageTagProcessor(
           }
 
           if (!app.app.vault.getConfig("useMarkdownLinks")) {
-            // image caption
             !settings.preserveCaptions || !caption.length
               ? (caption = "")
               : (caption = "\|" + caption);
 
-            // image size has higher priority
             !settings.preserveCaptions || !imgsize.length
               ? (caption = "")
               : (caption = "\|" + imgsize);
@@ -191,12 +187,12 @@ export async function getRDir(
   let pathMd = "";
 
   const notePath = normalizePath(noteFile.parent.path);
-  const parsedPath = path.parse(normalizePath(fileName));
+  const parsedPath = pathParse(normalizePath(fileName));
 
   const parsedPathE = {
-    parentd: path.basename(parsedPath["dir"]),
+    parentd: pathBasename(parsedPath["dir"]),
     basen: parsedPath["name"] + parsedPath["ext"],
-    lnkurid: path.basename(decodeURI(link)),
+    lnkurid: pathBasename(decodeURI(link)),
     pathuri: encodeURI(normalizePath(fileName)),
   };
 
@@ -206,7 +202,7 @@ export async function getRDir(
       break;
     case "onlyRelative":
       pathWiki = pathJoin([
-        path.relative(path.sep + notePath, path.sep + parsedPath["dir"]),
+        pathRelative("/" + notePath, "/" + parsedPath["dir"]),
         parsedPathE["basen"],
       ]);
       pathMd = encodeURI(pathWiki);
@@ -347,8 +343,6 @@ async function chooseFileName(
   if (!fileName) {
     throw new Error("Failed to generate file name for media file.");
   }
-
-  //linkHashes.ensureHashGenerated(link, contentData);
 
   return { fileName, needWrite };
 }

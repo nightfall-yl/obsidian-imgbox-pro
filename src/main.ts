@@ -17,7 +17,10 @@ import {
   pathJoin,
   blobToJpegArrayBuffer,
   getFileExt,
-  readFromDiskB,
+  pathBasename,
+  pathDirname,
+  pathParse,
+  pathExtname,
 } from "./utils";
 
 import {
@@ -32,16 +35,12 @@ import {
 } from "./config";
 
 import { UniqueQueue } from "./uniqueQueue";
-import path from "path";
 import { ModalW1 } from "./modal";
 import { ClearUnusedLogsModal } from "./clearUnusedModal";
 import { deleteFilesInTheList, getFormattedDate, getUnusedAttachments } from "./clearUnusedUtils";
 import { getAllLinkMatchesInFile } from "./clearUnusedLinkDetector";
 import { PreviewFeature } from "./previewFeature";
 import { isChineseDisplayLanguage } from "./previewHelpers";
-const fs = require("fs").promises;
-
-//import { count, log } from "console"
 
 export default class LocalImagesPlugin extends Plugin {
   settings: ISettings;
@@ -63,11 +62,11 @@ export default class LocalImagesPlugin extends Plugin {
     const links = fileCache?.links ?? [];
 
     for (const embed of embeds) {
-      attachmentNames.add(path.basename(embed.link));
+      attachmentNames.add(pathBasename(embed.link));
     }
 
     for (const link of links) {
-      attachmentNames.add(path.basename(link.link));
+      attachmentNames.add(pathBasename(link.link));
     }
 
     if (fileCache?.frontmatter) {
@@ -78,19 +77,19 @@ export default class LocalImagesPlugin extends Plugin {
 
         const bannerMatch = value.match(/!\[\[(.*?)\]\]/);
         if (bannerMatch?.[1]) {
-          attachmentNames.add(path.basename(bannerMatch[1]));
+          attachmentNames.add(pathBasename(bannerMatch[1]));
           continue;
         }
 
         if (/\.(jpe?g|png|gif|svg|bmp|webp|avif)(\?.*)?$/i.test(value)) {
-          attachmentNames.add(path.basename(value));
+          attachmentNames.add(pathBasename(value));
         }
       }
     }
 
     const linkMatches = await getAllLinkMatchesInFile(noteFile, this.app);
     for (const linkMatch of linkMatches) {
-      attachmentNames.add(path.basename(linkMatch.linkText));
+      attachmentNames.add(pathBasename(linkMatch.linkText));
     }
 
     return attachmentNames;
@@ -177,7 +176,6 @@ export default class LocalImagesPlugin extends Plugin {
       });
     }
 
-    // Some file has been created
     this.registerEvent(
       this.app.vault.on("create", async (file: TFile) => {
         logError("New file created: " + file.path);
@@ -190,7 +188,6 @@ export default class LocalImagesPlugin extends Plugin {
       })
     );
 
-    // Some file has been deleted
     this.registerEvent(
       this.app.vault.on("delete", async (file: TFile) => {
         if (
@@ -206,11 +203,11 @@ export default class LocalImagesPlugin extends Plugin {
         let rootdir = this.settings.mediaFolderPath;
         const useSysTrash = this.app.vault.getConfig("trashOption") === "system";
 
-        if (path.basename(rootdir).includes("${notename}") && !rootdir.includes("${date}")) {
+        if (pathBasename(rootdir).includes("${notename}") && !rootdir.includes("${date}")) {
           rootdir = rootdir.replace("${notename}", file.basename);
 
           if (this.settings.attachmentSaveLocation == "nextToNoteS") {
-            rootdir = pathJoin([path.dirname(file?.path || ""), rootdir]);
+            rootdir = pathJoin([pathDirname(file?.path || ""), rootdir]);
           }
 
           try {
@@ -245,19 +242,18 @@ export default class LocalImagesPlugin extends Plugin {
 
         let oldRootdir = this.settings.mediaFolderPath;
 
-        if (path.basename(oldRootdir).includes("${notename}") && !oldRootdir.includes("${date}")) {
-          oldRootdir = oldRootdir.replace("${notename}", path.parse(oldPath)?.name);
-          let newRootDir = oldRootdir.replace(path.parse(oldPath)?.name, path.parse(file.path)?.name);
+        if (pathBasename(oldRootdir).includes("${notename}") && !oldRootdir.includes("${date}")) {
+          oldRootdir = oldRootdir.replace("${notename}", pathParse(oldPath)?.name);
+          let newRootDir = oldRootdir.replace(pathParse(oldPath)?.name, pathParse(file.path)?.name);
           let newRootDir_ = newRootDir;
           let oldRootdir_ = oldRootdir;
 
-          oldRootdir_ = pathJoin([path.dirname(oldPath) || "", oldRootdir]);
-          newRootDir_ = pathJoin([path.dirname(file.path) || "", newRootDir]);
+          oldRootdir_ = pathJoin([pathDirname(oldPath) || "", oldRootdir]);
+          newRootDir_ = pathJoin([pathDirname(file.path) || "", newRootDir]);
 
           try {
             if (this.app.vault.getAbstractFileByPath(oldRootdir_) instanceof TFolder) {
-              await this.ensureFolderExists(path.dirname(newRootDir_));
-              //await this.app.fileManager.renameFile(this.app.vault.getAbstractFileByPath(oldRootdir),newRootDir)
+              await this.ensureFolderExists(pathDirname(newRootDir_));
               await this.app.vault.adapter.rename(oldRootdir_, newRootDir_);
               showBalloon(
                 "Attachment folder was renamed to " + newRootDir_,
@@ -278,7 +274,6 @@ export default class LocalImagesPlugin extends Plugin {
       })
     );
 
-    // Some file has been modified
     this.registerEvent(
       this.app.vault.on("modify", async (file: TFile) => {
         if (!this.newfMoveReq) return;
@@ -472,8 +467,6 @@ export default class LocalImagesPlugin extends Plugin {
     }
   }
 
-  // using arrow syntax for callbacks to correctly pass this context
-
   processActivePage =
     (defaultdir: boolean = false) =>
     async () => {
@@ -505,7 +498,6 @@ export default class LocalImagesPlugin extends Plugin {
     for (const [index, file] of files.entries()) {
       if (this.ExemplaryOfMD(file.path)) {
         if (notice) {
-          // Use type assertion to access setMessage method
           (notice as any).setMessage(
             APP_NAME + `\nProcessing \n"${file.path}" \nPage ${index} of ${pagesCount}`
           );
@@ -514,7 +506,6 @@ export default class LocalImagesPlugin extends Plugin {
       }
     }
     if (notice) {
-      // Use type assertion to access setMessage method
       (notice as any).setMessage(APP_NAME + `\n${pagesCount} pages were processed.`);
 
       setTimeout(() => {
@@ -546,7 +537,6 @@ export default class LocalImagesPlugin extends Plugin {
       }
 
       for (const key in tItems) {
-        // Check if it was a text/html
         if (tItems[key].kind == "string") {
           if (this.settings.autoProcess) {
             const cont =
@@ -592,12 +582,12 @@ export default class LocalImagesPlugin extends Plugin {
         const orphanedAttachments: TFile[] = [];
         if (
           this.settings.attachmentSaveLocation != "nextToNoteS" ||
-          !path.basename(oldRootdir).endsWith("${notename}") ||
+          !pathBasename(oldRootdir).endsWith("${notename}") ||
           oldRootdir.includes("${date}")
         ) {
           showBalloon(
             isChineseDisplayLanguage()
-              ? "此命令需要启用“保存在笔记旁边的指定文件夹”，并且路径末尾使用“${notename}”模板，同时路径不能包含“${date}”模板。\n请先修改设置！\r\n"
+              ? `此命令需要启用\u201C保存在笔记旁边的指定文件夹\u201D，并且路径末尾使用\u201C\${notename}\u201D模板，同时路径不能包含\u201C\${date}\u201D模板。\n请先修改设置！\r\n`
               : "This command requires the settings 'Next to note in the folder specified below' and pattern '${notename}' at the end to be enabled, also the path cannot contain ${date} pattern.\nPlease, change settings first!\r\n",
             this.settings.showNotifications
           );
@@ -618,8 +608,8 @@ export default class LocalImagesPlugin extends Plugin {
         }
 
         if (this.ExemplaryOfMD(noteFile.path)) {
-          oldRootdir = oldRootdir.replace("${notename}", path.parse(noteFile.path)?.name);
-          oldRootdir = trimAny(pathJoin([path.parse(noteFile.path)?.dir, oldRootdir]), ["\/"]);
+          oldRootdir = oldRootdir.replace("${notename}", pathParse(noteFile.path)?.name);
+          oldRootdir = trimAny(pathJoin([pathParse(noteFile.path)?.dir, oldRootdir]), ["\/"]);
           if (!(await this.app.vault.exists(oldRootdir))) {
             showBalloon(
               isChineseDisplayLanguage()
@@ -643,7 +633,7 @@ export default class LocalImagesPlugin extends Plugin {
           if (orphanedAttachments.length > 0) {
             const mod = new ModalW1(this.app);
             mod.messg = isChineseDisplayLanguage()
-              ? `确认从“${oldRootdir}”清理 ${orphanedAttachments.length} 个未关联附件？\r\n\r\n      `
+              ? `确认从"${oldRootdir}"清理 ${orphanedAttachments.length} 个未关联附件？\r\n\r\n      `
               : "Confirm clearing " +
                 orphanedAttachments.length +
                 " unlinked attachment(s) from '" +
@@ -774,8 +764,6 @@ export default class LocalImagesPlugin extends Plugin {
   private ThePathExcluded(pat: string) {
     const includeRegex = new RegExp(this.settings.excludedFoldersRegexp, "i");
     logError(pat.match(includeRegex));
-    // if (pat.match(includeRegex) != null && trimAny(this.settings.excludedFolders, [" "]).length != 0){
-    //    showBalloon("The path " + pat + " is excluded in your settings. ", true)}
     return (
       pat.match(includeRegex) != null && trimAny(this.settings.excludedFolders, [" "]).length != 0
     );
@@ -838,7 +826,7 @@ export default class LocalImagesPlugin extends Plugin {
           for (let el of embeds) {
             logError(el);
 
-            let oldpath = pathJoin([obsmdir, path.basename(el.link)]);
+            let oldpath = pathJoin([obsmdir, pathBasename(el.link)]);
             let oldtag = el["original"];
             logError(useMdLinks);
 
@@ -855,19 +843,14 @@ export default class LocalImagesPlugin extends Plugin {
                 continue;
               }
 
-              let newpath = pathJoin([mdir, cFileName(path.basename(el.link))]);
+              let newpath = pathJoin([mdir, cFileName(pathBasename(el.link))]);
               let newlink: Array<string> = await getRDir(note, this.settings, newpath);
 
               logError(el.link);
 
-              //let newBinData: Buffer | null = null
-
               let newBinData: ArrayBuffer | null = null;
               let newMD5: string | null = null;
-              const oldBinData = await readFromDiskB(
-                pathJoin([this.app.vault.adapter.basePath, oldpath]),
-                5000
-              );
+              const oldBinData = await this.app.vault.adapter.readBinary(oldpath);
               const oldMD5 = md5Sig(oldBinData);
               const fileExt = await getFileExt(oldBinData, oldpath);
 
@@ -904,7 +887,7 @@ export default class LocalImagesPlugin extends Plugin {
                   } else if (this.settings.useTimestampNaming) {
                     newpath = await this.buildTimestampedAttachmentPath(mdir, compExt, newMD5);
                   } else {
-                    newpath = pathJoin([mdir, cFileName(path.parse(el.link)?.name + compExt)]);
+                    newpath = pathJoin([mdir, cFileName(pathParse(el.link)?.name + compExt)]);
                   }
                   newlink = await getRDir(note, this.settings, newpath);
                 }
@@ -915,13 +898,13 @@ export default class LocalImagesPlugin extends Plugin {
                 } else {
                   newpath = await this.buildTimestampedAttachmentPath(
                     mdir,
-                    path.extname(el.link),
+                    pathExtname(el.link),
                     oldMD5
                   );
                 }
                 newlink = await getRDir(note, this.settings, newpath);
               } else if (!this.settings.useTimestampNaming) {
-                newpath = pathJoin([mdir, cFileName(path.basename(el.link))]);
+                newpath = pathJoin([mdir, cFileName(pathBasename(el.link))]);
                 newlink = await getRDir(note, this.settings, newpath);
               }
 
@@ -930,20 +913,18 @@ export default class LocalImagesPlugin extends Plugin {
                 if (newBinData != null) {
                   newFMD5 = md5Sig(await this.app.vault.adapter.readBinary(newpath));
                 } else {
-                  newFMD5 = md5Sig(
-                    await readFromDiskB(pathJoin([this.app.vault.adapter.basePath, newpath]), 5000)
-                  );
+                  newFMD5 = md5Sig(await this.app.vault.adapter.readBinary(newpath));
                 }
 
                 if (newMD5 === newFMD5 || (oldMD5 === newFMD5 && oldpath != newpath)) {
-                  logError(path.dirname(oldpath));
+                  logError(pathDirname(oldpath));
                   logError("Deleting duplicate file: " + oldpath);
                   await this.app.vault.adapter.remove(oldpath);
                 } else if (oldpath != newpath) {
                   logError("Renaming existing: " + oldpath);
                   let inc = 1;
                   while (await this.app.vault.adapter.exists(newpath)) {
-                    newpath = pathJoin([mdir, `(${inc}) ` + cFileName(path.basename(el.link))]);
+                    newpath = pathJoin([mdir, `(${inc}) ` + cFileName(pathBasename(el.link))]);
                     inc++;
                   }
 
@@ -969,9 +950,9 @@ export default class LocalImagesPlugin extends Plugin {
               let addName = "";
               if (this.settings.appendOriginalName) {
                 if (useMdLinks) {
-                  addName = `[Open: ${path.basename(el.link)}](${newlink[1]})\r\n`;
+                  addName = `[Open: ${pathBasename(el.link)}](${newlink[1]})\r\n`;
                 } else {
-                  addName = `[[${newlink[0]}|Open: ${path.basename(el.link)}]]\r\n`;
+                  addName = `[[${newlink[0]}|Open: ${pathBasename(el.link)}]]\r\n`;
                 }
               }
 
@@ -1023,11 +1004,9 @@ export default class LocalImagesPlugin extends Plugin {
   enqueueActivePage(activeFile: TFile) {
     this.modifiedQueue.push(
       activeFile,
-      1 //this.settings.realTim3AttemptsToProcess
+      1
     );
   }
-
-  // ------------  Load / Save settings -----------------
 
   async onunload() {
     this.previewFeature?.onunload();

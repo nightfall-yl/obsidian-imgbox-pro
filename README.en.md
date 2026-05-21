@@ -2,14 +2,15 @@
 
 > An image management toolkit for Obsidian
 
-`ImgBox Pro` is an Obsidian desktop plugin for managing images and attachments. It combines media localization, attachment cleanup, and preview interaction enhancements in a single plugin.
+`ImgBox Pro` is an Obsidian plugin for managing images and attachments, supporting both desktop and mobile. It combines media localization, attachment cleanup, and preview interaction enhancements in a single plugin.
 
 ## Features Overview
 
 - Image localization: download web images, handle pasted / dragged media, save base64 images
 - Attachment organization: multiple save locations, link styles, `YYYYMMDD-HHmmss-md5-first-6` naming, deduplication
 - Attachment cleanup: unused images, unused attachments, and unlinked attachments in the current note folder
-- Image interaction: context menu, click-to-preview, drag-to-resize, navigator highlight
+- Image interaction (desktop): context menu, click-to-preview, drag-to-resize, navigator highlight
+- Image interaction (mobile): uses the built-in Obsidian image viewer
 - Source-note jump: image navigator or image-tab context menu supports `Go to Source Note`
 - Top-navigation settings UI: `General / Localize / Preview / Cleanup`
 - Settings page language automatically follows Obsidian's system language
@@ -78,11 +79,17 @@ It triggers:
 
 ### Preview
 
+Desktop:
+
 - click-to-preview
 - preview ratio
 - drag-to-resize
 - resize step
 - image navigator or image-tab context menu supports `Go to Source Note`
+
+Mobile:
+
+- Uses the built-in Obsidian image viewer. No configuration needed.
 
 ### Cleanup
 
@@ -120,9 +127,9 @@ Notes:
 
 - plugin name: `ImgBox Pro`
 - plugin id: `obsidian-imgbox-pro`
-- version: `26.4.5`
+- version: `26.5.4`
 - minimum Obsidian version: `1.0.3`
-- desktop only: `true`
+- platform support: desktop + mobile
 
 ## Usage Notes
 

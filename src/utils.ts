@@ -1,10 +1,5 @@
-import path from "path";
-import { fromBuffer } from "file-type";
-import isSvg from "is-svg";
-import filenamify from "filenamify";
+import filenamify from "filenamify/browser";
 import md5 from "crypto-js/md5";
-import * as fs from "fs";
-import * as fsPromises from "fs/promises";
 
 import {
   FORBIDDEN_SYMBOLS_FILENAME_PATTERN,
@@ -18,14 +13,6 @@ import {
 } from "./config";
 
 import { requestUrl, Notice, TFile } from "obsidian";
-
-//import { TIMEOUT } from "dns";
-//import fs from "fs";
-
-/*
-https://stackoverflow.com/a/48032528/1020973
-It will be better to do it type-correct.
-*/
 
 export async function showBalloon(str: string, show: boolean = true, timeout = NOTICE_TIMEOUT) {
   if (show) {
@@ -179,7 +166,6 @@ export async function replaceAsync(str: any, regex: Array<RegExp>, asyncFn: any)
   const data = await Promise.all(promises);
   logError("Promises: ");
   logError(data, true);
-  //  return str.replace((reg: RegExp, str: String) => {
 
   data.forEach((element) => {
     if (element !== null) {
@@ -192,8 +178,6 @@ export async function replaceAsync(str: any, regex: Array<RegExp>, asyncFn: any)
   });
 
   return [str, errorflag, filesArr];
-
-  //  return str.replace( () => data.shift());
 }
 
 export function isUrl(link: string) {
@@ -205,54 +189,18 @@ export function isUrl(link: string) {
   }
 }
 
-export async function copyFromDisk(src: string, dest: string): Promise<null> {
-  logError("copyFromDisk: " + src + " to " + dest, false);
-  try {
-    await fs.copyFile(src, dest, null, (err: Error) => {
-      if (err) {
-        logError("Error:" + err, false);
-      }
-    });
-  } catch (e) {
-    logError("Cannot copy: " + e, false);
-    return null;
-  }
-}
-
 export async function base64ToBuff(data: string): Promise<ArrayBuffer> {
   logError("base64ToBuff: \r\n", false);
   try {
-    const BufferData = Buffer.from(data.split("base64,")[1], "base64");
-    logError(BufferData);
-    return BufferData;
+    const base64 = data.split("base64,")[1];
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
   } catch (e) {
     logError("Cannot read base64: " + e, false);
-    return null;
-  }
-}
-
-export async function readFromDiskB(file: string, count: number = undefined): Promise<Buffer> {
-  try {
-    const buffer = Buffer.alloc(count);
-    const fd: number = fs.openSync(file, "r+");
-    fs.readSync(fd, buffer, 0, buffer.length, 0);
-    logError(buffer);
-    fs.closeSync(fd);
-    return buffer;
-  } catch (e) {
-    logError("Cannot read the file: " + e, false);
-    return null;
-  }
-}
-
-export async function readFromDisk(file: string): Promise<ArrayBuffer> {
-  logError("readFromDisk: " + file, false);
-
-  try {
-    const data = await fsPromises.readFile(file, null);
-    return Buffer.from(data);
-  } catch (e) {
-    logError("Cannot read the file: " + e, false);
     return null;
   }
 }
@@ -274,14 +222,61 @@ export async function downloadImage(url: string): Promise<ArrayBuffer> {
   }
 }
 
-export async function getFileExt(content: ArrayBuffer, link: string) {
-  const fileExtByLink = path.extname(link).replace("\.", "");
-  const fileExtByBuffer = (await fromBuffer(content))?.ext;
+const MAGIC_SIGNATURES: Array<{ bytes: number[]; offset: number; ext: string }> = [
+  { bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], offset: 0, ext: "png" },
+  { bytes: [0xff, 0xd8, 0xff], offset: 0, ext: "jpg" },
+  { bytes: [0x47, 0x49, 0x46, 0x38], offset: 0, ext: "gif" },
+  { bytes: [0x42, 0x4d], offset: 0, ext: "bmp" },
+  { bytes: [0x25, 0x50, 0x44, 0x46], offset: 0, ext: "pdf" },
+  { bytes: [0x50, 0x4b, 0x03, 0x04], offset: 0, ext: "zip" },
+  { bytes: [0x49, 0x44, 0x33], offset: 0, ext: "mp3" },
+  { bytes: [0xff, 0xfb], offset: 0, ext: "mp3" },
+  { bytes: [0x1a, 0x45, 0xdf, 0xa3], offset: 0, ext: "mkv" },
+  { bytes: [0x4f, 0x67, 0x67, 0x53], offset: 0, ext: "ogg" },
+  { bytes: [0x46, 0x4c, 0x56], offset: 0, ext: "flv" },
+  { bytes: [0x66, 0x74, 0x79, 0x70], offset: 4, ext: "mp4" },
+];
 
-  // if XML, probably it is SVG
+function detectExtByMagicNumber(content: ArrayBuffer): string | undefined {
+  const header = new Uint8Array(content.slice(0, 32));
+
+  for (const sig of MAGIC_SIGNATURES) {
+    if (sig.offset + sig.bytes.length > header.length) continue;
+    let match = true;
+    for (let i = 0; i < sig.bytes.length; i++) {
+      if (header[sig.offset + i] !== sig.bytes[i]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) return sig.ext;
+  }
+
+  if (header.length >= 12) {
+    const isRIFF = header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46;
+    const isWEBP = header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50;
+    if (isRIFF && isWEBP) return "webp";
+  }
+
+  return undefined;
+}
+
+function isSvgBuffer(data: ArrayBuffer): boolean {
+  try {
+    const header = new Uint8Array(data.slice(0, 1024));
+    const text = new TextDecoder("utf-8", { fatal: false }).decode(header);
+    return /^\s*<\?xml|^\s*<svg/i.test(text);
+  } catch {
+    return false;
+  }
+}
+
+export async function getFileExt(content: ArrayBuffer, link: string) {
+  const fileExtByLink = pathExtname(link).replace(".", "");
+  const fileExtByBuffer = detectExtByMagicNumber(content);
+
   if (fileExtByBuffer == "xml" || !fileExtByBuffer) {
-    const buffer = Buffer.from(content);
-    if (isSvg(buffer)) return "svg";
+    if (isSvgBuffer(content)) return "svg";
   }
 
   logError("fileExtByBuffer" + fileExtByBuffer);
@@ -304,8 +299,6 @@ export async function getFileExt(content: ArrayBuffer, link: string) {
   return "unknown";
 }
 
-//https://stackoverflow.com/questions/26156292/trim-specific-character-from-a-string
-
 export function trimAny(str: string, chars: Array<string>) {
   let start = 0,
     end = str.length;
@@ -327,14 +320,77 @@ export function cleanFileName(name: string) {
   return cleanedName;
 }
 
-export function pathJoin(parts: Array<string>): string {
-  const result = path.join(...parts);
-  // it seems that obsidian do not understand paths with backslashes in Windows, so turn them into forward slashes
-  return result.replace(/\\/g, "/");
+export function pathBasename(filepath: string): string {
+  const normalized = filepath.replace(/\\/g, "/");
+  const parts = normalized.split("/");
+  return parts[parts.length - 1] || "";
 }
 
-export function normalizePath(path: string) {
-  return path.replace(/\\/g, "/");
+export function pathExtname(filepath: string): string {
+  const base = pathBasename(filepath);
+  const dotIndex = base.lastIndexOf(".");
+  if (dotIndex <= 0) return "";
+  return base.slice(dotIndex);
+}
+
+export function pathDirname(filepath: string): string {
+  const normalized = filepath.replace(/\\/g, "/");
+  const parts = normalized.split("/");
+  parts.pop();
+  return parts.join("/") || ".";
+}
+
+export function pathParse(filepath: string): {
+  root: string;
+  dir: string;
+  base: string;
+  ext: string;
+  name: string;
+} {
+  const normalized = filepath.replace(/\\/g, "/");
+  const dir = pathDirname(normalized);
+  const base = pathBasename(normalized);
+  const ext = pathExtname(normalized);
+  const name = base.slice(0, base.length - ext.length);
+  return { root: "", dir, base, ext, name };
+}
+
+export function pathRelative(from: string, to: string): string {
+  const fromParts = from
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter(Boolean);
+  const toParts = to
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter(Boolean);
+
+  let commonLength = 0;
+  while (
+    commonLength < fromParts.length &&
+    commonLength < toParts.length &&
+    fromParts[commonLength] === toParts[commonLength]
+  ) {
+    commonLength++;
+  }
+
+  const upCount = fromParts.length - commonLength;
+  const upParts = Array(upCount).fill("..");
+  const downParts = toParts.slice(commonLength);
+
+  return [...upParts, ...downParts].join("/") || ".";
+}
+
+export function pathJoin(parts: Array<string>): string {
+  return parts
+    .join("/")
+    .replace(/\\/g, "/")
+    .replace(/\/+/g, "/")
+    .replace(/^(.+)\/$/, "$1");
+}
+
+export function normalizePath(p: string) {
+  return p.replace(/\\/g, "/");
 }
 
 export function encObsURI(e: string) {
@@ -343,12 +399,6 @@ export function encObsURI(e: string) {
   });
 }
 
-/**
- * https://github.com/mnaoumov/obsidian-dev-utils (modified)
- * @param blob - The Blob object to convert.
- * @param imgQuality - The quality of the image (0 to 1).
- * @returns A promise that resolves to an ArrayBuffer.
- */
 export async function blobToJpegArrayBuffer(
   blob: Blob,
   imgQuality: number,
@@ -366,7 +416,6 @@ export async function blobToJpegArrayBuffer(
         }
         const imageWidth = image.width;
         const imageHeight = image.height;
-        let data = "";
 
         canvas.width = imageWidth;
         canvas.height = imageHeight;
@@ -389,7 +438,7 @@ export async function blobToJpegArrayBuffer(
         );
         context.restore();
 
-        data = canvas.toDataURL(imgType, imgQuality);
+        const data = canvas.toDataURL(imgType, imgQuality);
 
         const arrayBuffer = base64ToBuff(data);
         resolve(arrayBuffer);

@@ -1,24 +1,9 @@
-/**
- * 右键菜单功能模块
- */
-
 import { Menu, MenuItem, Notice, Platform, TFile } from "obsidian";
 import LocalImagesPlugin from "./main";
 import { getImageMimeTypeFromExtension, loadImageBlob, normalizeImageBlobForClipboard, onElement, isChineseDisplayLanguage } from "./previewHelpers";
 import { deleteCurTargetLink, handlerDelFileNew, handlerRenameFile } from "./previewUtil";
 import { EditorView } from "@codemirror/view";
 
-/**
- * 添加源代码模式下的扩展菜单
- * @param plugin 插件实例
- * @param menu 菜单对象
- * @param fileBaseName 文件基础名称
- * @param currentMd 当前 Markdown 文件
- * @param targetType 目标类型
- * @param targetPos 目标位置
- * @param inTable 是否在表格中
- * @param inCallout 是否在调用框中
- */
 export function addMenuExtendedSourceMode(
   plugin: LocalImagesPlugin,
   menu: Menu,
@@ -57,13 +42,6 @@ export function addMenuExtendedSourceMode(
   );
 }
 
-/**
- * 添加预览模式下的扩展菜单
- * @param plugin 插件实例
- * @param menu 菜单对象
- * @param fileBaseName 文件基础名称
- * @param currentMd 当前 Markdown 文件
- */
 export function addMenuExtendedPreviewMode(
   plugin: LocalImagesPlugin,
   menu: Menu,
@@ -101,30 +79,31 @@ export function addMenuExtendedPreviewMode(
       })
   );
 
-  menu.addItem((item: MenuItem) =>
-    item
-      .setIcon("arrow-up-right")
-      .setTitle(isChineseDisplayLanguage() ? "使用默认应用打开" : "Open with Default App")
-      .onClick(() => {
-        // 使用类型断言访问内部API
-        const appWithDesktopApi = plugin.app as unknown as {
-          openWithDefaultApp: (path: string) => void;
-        };
-        appWithDesktopApi.openWithDefaultApp(file.path);
-      })
-  );
-  menu.addItem((item: MenuItem) =>
-    item
-      .setIcon("arrow-up-right")
-      .setTitle(Platform.isMacOS ? (isChineseDisplayLanguage() ? "在 Finder 中显示" : "Show in Finder") : (isChineseDisplayLanguage() ? "在系统资源管理器中显示" : "Show in File Explorer"))
-      .onClick(() => {
-        // 使用类型断言访问内部API
-        const appWithDesktopApi = plugin.app as unknown as {
-          showInFolder: (path: string) => void;
-        };
-        appWithDesktopApi.showInFolder(file.path);
-      })
-  );
+  if (Platform.isDesktop) {
+    menu.addItem((item: MenuItem) =>
+      item
+        .setIcon("arrow-up-right")
+        .setTitle(isChineseDisplayLanguage() ? "使用默认应用打开" : "Open with Default App")
+        .onClick(() => {
+          const appWithDesktopApi = plugin.app as unknown as {
+            openWithDefaultApp: (path: string) => void;
+          };
+          appWithDesktopApi.openWithDefaultApp(file.path);
+        })
+    );
+    menu.addItem((item: MenuItem) =>
+      item
+        .setIcon("arrow-up-right")
+        .setTitle(Platform.isMacOS ? (isChineseDisplayLanguage() ? "在 Finder 中显示" : "Show in Finder") : (isChineseDisplayLanguage() ? "在系统资源管理器中显示" : "Show in File Explorer"))
+        .onClick(() => {
+          const appWithDesktopApi = plugin.app as unknown as {
+            showInFolder: (path: string) => void;
+          };
+          appWithDesktopApi.showInFolder(file.path);
+        })
+    );
+  }
+
   menu.addItem((item: MenuItem) =>
     item
       .setIcon("folder")
@@ -135,11 +114,6 @@ export function addMenuExtendedPreviewMode(
   );
 }
 
-/**
- * 添加外部图片预览模式下的菜单
- * @param menu 菜单对象
- * @param img 图片元素
- */
 export function addExternalImageMenuPreviewMode(menu: Menu, img: HTMLImageElement): void {
   menu.addItem((item: MenuItem) =>
     item
@@ -194,14 +168,6 @@ export function addExternalImageMenuPreviewMode(menu: Menu, img: HTMLImageElemen
   );
 }
 
-/**
- * 添加外部图片源代码模式下的菜单
- * @param plugin 插件实例
- * @param menu 菜单对象
- * @param img 图片元素
- * @param inTable 是否在表格中
- * @param inCallout 是否在调用框中
- */
 export function addExternalImageMenuSourceMode(
   plugin: LocalImagesPlugin,
   menu: Menu,
@@ -215,9 +181,8 @@ export function addExternalImageMenuSourceMode(
       .setIcon("trash-2")
       .setTitle(isChineseDisplayLanguage() ? "删除图片链接" : "Delete Image Link")
       .onClick(() => {
-        const markdownView = plugin.app.workspace.getActiveViewOfType(require("obsidian").MarkdownView) as any;
+        const markdownView = plugin.app.workspace.getActiveViewOfType(MarkdownView) as any;
         const editor = markdownView?.editor;
-        // 使用更安全的类型检查
         const editorView = (editor as { cm?: EditorView })?.cm;
         if (!editorView) {
           return;
@@ -228,11 +193,6 @@ export function addExternalImageMenuSourceMode(
   );
 }
 
-/**
- * 注册Escape按钮事件监听器
- * @param menu 菜单对象
- * @param doc 文档对象，默认为当前文档
- */
 export function registerEscapeButton(menu: Menu, doc: Document = document): void {
   menu.register(
     onElement(doc, "keydown" as keyof HTMLElementEventMap, "*", (e: KeyboardEvent) => {

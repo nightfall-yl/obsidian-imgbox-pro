@@ -2,8 +2,9 @@
  * 文件浏览器功能模块
  */
 
-import { TFile } from "obsidian";
+import { Notice, Platform, TFile } from "obsidian";
 import LocalImagesPlugin from "./main";
+import { isChineseDisplayLanguage } from "./previewHelpers";
 
 /**
  * 获取转义后的选择器路径
@@ -95,13 +96,17 @@ export function locateFileInExplorer(
   setExplorerHighlightSuppressTimer: (timer: number | null) => void,
   setHighlightedExplorerPath: (path: string | null) => void
 ): void {
+  if (Platform.isMobile) {
+    new Notice(isChineseDisplayLanguage() ? "此功能仅桌面端可用" : "This feature is desktop only");
+    return;
+  }
+
   const abstractFilePath = plugin.app.vault.getAbstractFileByPath(file.path);
   document.body.classList.add("af-suppress-file-explorer-flash");
   if (explorerHighlightSuppressTimer !== null) {
     window.clearTimeout(explorerHighlightSuppressTimer);
   }
 
-  // 使用类型断言访问内部API
   try {
     const appWithInternalApi = plugin.app as unknown as {
       internalPlugins: {
@@ -113,7 +118,7 @@ export function locateFileInExplorer(
       .revealInFolder(abstractFilePath);
   } catch (error) {
     console.error("Error revealing file in explorer:", error);
-    new (require("obsidian").Notice)("无法在文件浏览器中定位文件");
+    new Notice(isChineseDisplayLanguage() ? "无法在文件浏览器中定位文件" : "Cannot locate file in explorer");
   }
   setHighlightedExplorerPath(file.path);
   window.requestAnimationFrame(() => {

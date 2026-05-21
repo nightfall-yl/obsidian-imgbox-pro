@@ -22,7 +22,6 @@ declare module "obsidian" {
   }
 
   interface DataAdapter {
-    basePath: string;
     exists(path: string, sensitive?: boolean): Promise<boolean>;
     readBinary(path: string): Promise<ArrayBuffer>;
   }

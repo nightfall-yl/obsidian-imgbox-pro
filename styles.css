@@ -208,9 +208,8 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
 }
 
 .lip-settings-nav-btn:hover {
-  background: transparent;
+  background: var(--background-modifier-hover);
   color: var(--text-normal);
-  transform: translateY(-1px);
 }
 
 .lip-settings-nav-btn:not(.is-active) {
@@ -230,7 +229,7 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
 .lip-settings-nav-btn.is-active {
   padding: var(--size-4-3) var(--size-4-4);
   border-radius: 6px;
-  background: var(--background-secondary);
+  background: var(--background-modifier-hover);
   color: var(--text-normal);
   box-shadow: none;
 }
@@ -264,14 +263,51 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════ */
+/* Settings: Mobile — 桌面端/移动端背景变量相反！                    */
+/* 桌面端: 页面=primary(浅) 卡片=secondary(深) → 浅→深              */
+/* 移动端: 页面=secondary(深) 卡片=primary(浅) → 深→浅（反向！）     */
+/* ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 720px) {
+  .lip-settings-root {
+    --lip-settings-group-bg: var(--background-primary);
+    --lip-settings-group-padding: 0 var(--size-4-3);
+    --lip-settings-group-radius: 16px;
+  }
+
+  .lip-settings-group + .lip-settings-group {
+    margin-top: var(--size-4-4);
+  }
+
+  .lip-settings-root .lip-settings-subgroup-title {
+    margin-top: var(--size-4-4);
+    margin-bottom: var(--size-4-3);
+  }
+
   .lip-settings-nav {
-    gap: 10px 12px;
+    gap: var(--size-4-2) var(--size-4-3);
   }
 
   .lip-settings-nav-btn {
-    padding: 10px 12px;
+    padding: var(--size-4-2) var(--size-4-3);
     font-size: calc(var(--lip-settings-nav-font-size) - 1px);
+  }
+
+  .lip-settings-nav-btn.is-active {
+    background: var(--background-modifier-hover);
+    border-radius: 6px;
+  }
+
+  .lip-settings-dependent {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: var(--size-4-3);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .lip-settings-danger-warning {
+    font-size: var(--font-ui-smaller);
+    padding: var(--size-4-2) var(--size-4-3);
   }
 }
 

@@ -233,6 +233,11 @@ export class PreviewFeature {
       if (!this.plugin.settings.clickPreviewEnabled) {
         return;
       }
+
+      if (Platform.isMobile) {
+        return;
+      }
+
       const target = evt.target as HTMLElement;
       if (target.tagName !== "IMG") {
         this.removeZoomedImage();
@@ -429,6 +434,9 @@ export class PreviewFeature {
 
     this.plugin.register(
       onElement(doc, "mousedown", "img, video", (event: MouseEvent) => {
+        if (Platform.isMobile) {
+          return;
+        }
         if (!this.plugin.settings.dragResizeEnabled) {
           return;
         }
@@ -532,6 +540,9 @@ export class PreviewFeature {
 
     this.plugin.register(
       onElement(doc, "mouseover", "img, video", (event: MouseEvent) => {
+        if (Platform.isMobile) {
+          return;
+        }
         const currentMd = this.plugin.app.workspace.getActiveFile();
         if (!currentMd || currentMd.name.endsWith(".canvas")) {
           return;
@@ -585,6 +596,9 @@ export class PreviewFeature {
 
     this.plugin.register(
       onElement(doc, "mouseout", "img, video", (event: MouseEvent) => {
+        if (Platform.isMobile) {
+          return;
+        }
         const currentMd = this.plugin.app.workspace.getActiveFile();
         if (!currentMd || currentMd.name.endsWith(".canvas")) {
           return;
@@ -599,9 +613,11 @@ export class PreviewFeature {
       })
     );
 
-    this.plugin.register(
-      onElement(doc, "mousedown", "img", this.externalImageContextMenuCall.bind(this))
-    );
+    if (Platform.isDesktop) {
+      this.plugin.register(
+        onElement(doc, "mousedown", "img", this.externalImageContextMenuCall.bind(this))
+      );
+    }
   }
 
 
