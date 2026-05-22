@@ -23,7 +23,8 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     navGeneral: "通用",
     navLocalize: "图片本地化",
     navPreview: "图片预览",
-    navCleanup: "图片清理",
+    subgroupPreviewTitle: "图片预览",
+    subgroupCleanupTitle: "图片清理",
     showNotifications: "显示通知",
     showNotificationsDesc: "处理页面后显示通知。",
     showBatchCommands: "显示批量命令",
@@ -122,7 +123,8 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     navGeneral: "General",
     navLocalize: "Localize",
     navPreview: "Preview",
-    navCleanup: "Cleanup",
+    subgroupPreviewTitle: "Image Preview",
+    subgroupCleanupTitle: "Image Cleanup",
     showNotifications: "Show notifications",
     showNotificationsDesc: "Show notifications after pages are processed.",
     showBatchCommands: "Show batch commands",
@@ -351,7 +353,6 @@ export default class SettingTab extends PluginSettingTab {
       { id: "general", label: t("navGeneral"), icon: "settings-2" },
       { id: "localize", label: t("navLocalize"), icon: "panel-left" },
       { id: "preview", label: t("navPreview"), icon: "image" },
-      { id: "cleanup", label: t("navCleanup"), icon: "list" },
     ];
 
     const navEl = containerEl.createDiv({ cls: "lip-settings-nav" });
@@ -718,6 +719,8 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 图片预览 =====================
     const previewEl = sectionEls.get("preview")!;
+
+    previewEl.createEl("h3", { text: t("subgroupPreviewTitle"), cls: "lip-settings-subgroup-title" });
     const previewGroupEl = this.createSettingGroup(previewEl);
 
     if (Platform.isDesktop) {
@@ -774,9 +777,8 @@ export default class SettingTab extends PluginSettingTab {
         .setDesc(t("previewMobileDesc"));
     }
 
-    // ===================== 图片清理 =====================
-    const cleanupEl = sectionEls.get("cleanup")!;
-    const cleanupGroupEl = this.createSettingGroup(cleanupEl);
+    previewEl.createEl("h3", { text: t("subgroupCleanupTitle"), cls: "lip-settings-subgroup-title" });
+    const cleanupGroupEl = this.createSettingGroup(previewEl);
 
     new Setting(cleanupGroupEl)
       .setName(t("deleteDestination"))

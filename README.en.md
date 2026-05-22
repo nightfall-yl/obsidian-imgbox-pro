@@ -12,7 +12,7 @@
 - Image interaction (desktop): context menu, click-to-preview, drag-to-resize, navigator highlight
 - Image interaction (mobile): uses the built-in Obsidian image viewer
 - Source-note jump: image navigator or image-tab context menu supports `Go to Source Note`
-- Top-navigation settings UI: `General / Localize / Preview / Cleanup`
+- Top-navigation settings UI: `General / Localize / Preview`
 - Settings page language automatically follows Obsidian's system language
 - Cleanup `Ribbon` shortcut
 - Full command palette access
@@ -79,19 +79,13 @@ It triggers:
 
 ### Preview
 
-Desktop:
+Image Preview:
 
-- click-to-preview
-- preview ratio
-- drag-to-resize
-- resize step
-- image navigator or image-tab context menu supports `Go to Source Note`
+- Desktop: click-to-preview, preview ratio, drag-to-resize, resize step
+- Mobile: uses the built-in Obsidian image viewer. No configuration needed.
+- Image navigator or image-tab context menu supports `Go to Source Note`
 
-Mobile:
-
-- Uses the built-in Obsidian image viewer. No configuration needed.
-
-### Cleanup
+Image Cleanup:
 
 - deletion target (trash / permanent delete)
 - operation log modal
