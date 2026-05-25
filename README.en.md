@@ -7,12 +7,12 @@
 ## Features Overview
 
 - Image localization: download web images, handle pasted / dragged media, save base64 images
-- Attachment organization: multiple save locations, link styles, `YYYYMMDD-HHmmss-md5-first-6` naming, deduplication
+- Attachment organization: multiple save locations, link styles, `YYYYMMDD-HHmmss-md5-first-6` naming, deduplication (images and non-image attachments can be controlled separately)
 - Attachment cleanup: unused images, unused attachments, and unlinked attachments in the current note folder
 - Image interaction (desktop): context menu, click-to-preview, drag-to-resize, navigator highlight
 - Image interaction (mobile): uses the built-in Obsidian image viewer
 - Source-note jump: image navigator or image-tab context menu supports `Go to Source Note`
-- Top-navigation settings UI: `General / Localize / Preview`
+- Top-navigation settings UI: `Localize / Image Management`
 - Settings page language automatically follows Obsidian's system language
 - Cleanup `Ribbon` shortcut
 - Full command palette access
@@ -36,7 +36,7 @@ Optional commands:
 
 Notes:
 
-- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` is only available in "next to note" mode, and the folder pattern must end with `${notename}` and must not contain `${date}`
+- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` is only available in "next to note" mode, and the folder pattern must end with `${notename}`
 - the image navigator or image-tab context menu provides: `Go to Source Note`
 
 ## Ribbon
@@ -52,32 +52,40 @@ It triggers:
 
 ## Settings
 
-### General
-
-- notifications
-- cleanup Ribbon visibility
-- automatic processing and interval
-- process newly created Markdown files
-- batch commands: show batch commands
-- developer options (debug mode)
-
 ### Localize
 
-- trigger: process newly created attachments
-- download retry count
-- unknown file download
-- image compression
-- compression format and quality
-- minimum file size
-- excluded extensions
-- naming: `YYYYMMDD-HHmmss-md5-first-6`
-- path: new attachment save location and media folder template
-- path: link path style
-- path: date format
-- other: link title preservation
-- advanced options: original filename tag, media-folder sync, Obsidian attachment-folder compatibility
+Auto Trigger:
 
-### Preview
+- automatic processing switch and interval
+- process newly created Markdown files
+
+Storage & Naming:
+
+- process all new attachments
+- save location (follow Obsidian / next to note / root directory)
+- media folder path
+- move, delete, or rename media folder together
+- use time + MD5 names for new images
+- use time + MD5 names for new non-image attachments
+- add original filename or open-file tag
+- preserve link captions
+- path format in tags
+- do not create Obsidian attachment folder
+
+Download Behavior:
+
+- retry count per attachment
+- download unknown file types
+- file size lower limit (KB)
+- excluded extensions
+
+Image Compression:
+
+- compress images toggle
+- compression format (WebP / JPEG)
+- image quality
+
+### Image Management
 
 Image Preview:
 
@@ -87,10 +95,17 @@ Image Preview:
 
 Image Cleanup:
 
-- deletion target (trash / permanent delete)
-- operation log modal
+- show cleanup Ribbon icon
+- deletion target (trash / permanent delete / Obsidian Trash / System Trash)
+- show operation log modal
 - excluded folder list
-- exclude subfolders
+- exclude subfolders during cleanup
+
+UI & Global:
+
+- show notifications
+- show batch commands
+- debug mode
 
 ## Supported Image Formats
 
@@ -122,7 +137,7 @@ Notes:
 
 - plugin name: `ImgBox Pro`
 - plugin id: `obsidian-imgbox-pro`
-- version: `26.5.4`
+- version: `26.5.6`
 - minimum Obsidian version: `1.0.3`
 - platform support: desktop + mobile
 

@@ -21,7 +21,6 @@ import {
 import { ISettings } from "./config";
 
 import AsyncLock from "async-lock";
-import moment from "moment";
 
 export function imageTagProcessor(
   app: Plugin,
@@ -226,8 +225,6 @@ export async function getMDir(
   unique: string = ""
 ): Promise<string> {
   const notePath = noteFile.parent.path;
-  const date = new Date();
-  const current_date = moment().format(settings.dateFormat);
   const obsmediadir = app.vault.getConfig("attachmentFolderPath");
   const mediadir = settings.mediaFolderPath;
   let attdir = settings.attachmentSaveLocation;
@@ -240,15 +237,13 @@ export async function getMDir(
     case "inFolderBelow":
       root = mediadir
         .replace("${notename}", noteFile.basename)
-        .replace("${unique}", unique)
-        .replace("${date}", current_date);
+        .replace("${unique}", unique);
       break;
 
     case "nextToNoteS":
       root = pathJoin([noteFile.parent.path, mediadir])
         .replace("${notename}", noteFile.basename)
-        .replace("${unique}", unique)
-        .replace("${date}", current_date);
+        .replace("${unique}", unique);
       break;
 
     default:

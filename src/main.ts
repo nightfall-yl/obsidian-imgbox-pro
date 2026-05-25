@@ -1,4 +1,13 @@
-import { Notice, Plugin, TFile, Editor, htmlToMarkdown, MarkdownView, TFolder } from "obsidian";
+import {
+  Notice,
+  Plugin,
+  TFile,
+  Editor,
+  htmlToMarkdown,
+  MarkdownView,
+  TFolder,
+  EmbedCache,
+} from "obsidian";
 
 import SettingTab from "./settingstab";
 
@@ -42,6 +51,12 @@ import { getAllLinkMatchesInFile } from "./clearUnusedLinkDetector";
 import { PreviewFeature } from "./previewFeature";
 import { isChineseDisplayLanguage } from "./previewHelpers";
 
+const RECENT_CREATED_FILE_MAX_AGE_MS = 10000;
+
+const IMAGE_EXTENSIONS = new Set([
+  "png", "jpg", "jpeg", "gif", "svg", "bmp", "webp", "avif", "heic",
+]);
+
 export default class LocalImagesPlugin extends Plugin {
   settings: ISettings;
   modifiedQueue = new UniqueQueue<TFile>();
@@ -54,6 +69,75 @@ export default class LocalImagesPlugin extends Plugin {
   clearUnusedRibbonIconEl: HTMLElement | undefined = undefined;
   previewFeature: PreviewFeature | undefined = undefined;
   latestCreatedMarkdownFile: TFile | null = null;
+  pendingPastedMarkdownFile: TFile | null = null;
+  pendingPastedMarkdownTime = 0;
+
+  private queueAttachmentTargetNote(noteFile: TFile | null) {
+    if (!noteFile || !this.ExemplaryOfMD(noteFile.path) || this.noteModified.includes(noteFile)) {
+      return;
+    }
+
+    this.noteModified.push(noteFile);
+  }
+
+  private getEmbeddedAttachmentsFromContent(filedata: string): Array<Pick<EmbedCache, "link" | "original">> {
+    const embeds: Array<Pick<EmbedCache, "link" | "original">> = [];
+    const seen = new Set<string>();
+    const addEmbed = (link: string, original: string) => {
+      if (!link || seen.has(original)) {
+        return;
+      }
+
+      embeds.push({ link, original });
+      seen.add(original);
+    };
+
+    const wikiEmbedRegex = /!\[\[([^\]\n]+)\]\]/g;
+    for (const match of filedata.matchAll(wikiEmbedRegex)) {
+      const original = match[0];
+      const link = match[1].split("|")[0].trim();
+      addEmbed(link, original);
+    }
+
+    const markdownEmbedRegex = /!\[[^\]\n]*\]\(([^)\n]+)\)/g;
+    for (const match of filedata.matchAll(markdownEmbedRegex)) {
+      const original = match[0];
+      let link = match[1].trim();
+      try {
+        link = decodeURIComponent(link);
+      } catch (e) {
+        logError(e);
+      }
+      if (/^(https?:|data:)/i.test(link)) {
+        continue;
+      }
+
+      addEmbed(link, original);
+    }
+
+    return embeds;
+  }
+
+  private getEmbeddedAttachments(
+    metaEmbeds: EmbedCache[] | undefined,
+    filedata: string
+  ): Array<Pick<EmbedCache, "link" | "original">> {
+    const embeds: Array<Pick<EmbedCache, "link" | "original">> = [];
+    const seen = new Set<string>();
+
+    for (const embed of metaEmbeds ?? []) {
+      embeds.push(embed);
+      seen.add(embed.original);
+    }
+
+    for (const embed of this.getEmbeddedAttachmentsFromContent(filedata)) {
+      if (!seen.has(embed.original)) {
+        embeds.push(embed);
+      }
+    }
+
+    return embeds;
+  }
 
   private async getCurrentNoteAttachmentBaseNames(noteFile: TFile): Promise<Set<string>> {
     const attachmentNames = new Set<string>();
@@ -97,7 +181,8 @@ export default class LocalImagesPlugin extends Plugin {
 
   private async findDuplicateAttachmentByHash(
     folderPath: string,
-    hash: string
+    hash: string,
+    excludePath?: string
   ): Promise<TFile | null> {
     const folder = this.app.vault.getAbstractFileByPath(folderPath);
     if (!(folder instanceof TFolder)) {
@@ -105,7 +190,7 @@ export default class LocalImagesPlugin extends Plugin {
     }
 
     for (const child of folder.children) {
-      if (!(child instanceof TFile)) {
+      if (!(child instanceof TFile) || child.path === excludePath) {
         continue;
       }
 
@@ -136,25 +221,33 @@ export default class LocalImagesPlugin extends Plugin {
 
     this.addCommand({
       id: "download-images",
-      name: "Localize attachments for the current note (plugin folder)",
+      name: isChineseDisplayLanguage()
+        ? "本地化当前笔记附件（插件文件夹）"
+        : "Localize attachments for the current note (plugin folder)",
       callback: this.processActivePage(false),
     });
 
     this.addCommand({
       id: "download-images-def",
-      name: "Localize attachments for the current note (Obsidian folder)",
+      name: isChineseDisplayLanguage()
+        ? "本地化当前笔记附件（Obsidian 文件夹）"
+        : "Localize attachments for the current note (Obsidian folder)",
       callback: this.processActivePage(true),
     });
 
     this.addCommand({
       id: "clear-unused-images",
-      name: "Clear Unused Images in Vault",
+      name: isChineseDisplayLanguage()
+        ? "清理库中未引用的图片"
+        : "Clear Unused Images in Vault",
       callback: () => this.clearUnusedAttachments("image"),
     });
 
     this.addCommand({
       id: "clear-unused-attachments",
-      name: "Clear Unused Attachments in Vault",
+      name: isChineseDisplayLanguage()
+        ? "清理库中未引用的附件"
+        : "Clear Unused Attachments in Vault",
       callback: () => this.clearUnusedAttachments("all"),
     });
 
@@ -163,13 +256,17 @@ export default class LocalImagesPlugin extends Plugin {
     if (this.settings.showBatchCommands) {
       this.addCommand({
         id: "download-images-all",
-        name: "Localize attachments for all your notes (plugin folder)",
+        name: isChineseDisplayLanguage()
+          ? "批量本地化所有笔记的附件（插件文件夹）"
+          : "Localize attachments for all your notes (plugin folder)",
         callback: this.openProcessAllModal,
       });
 
       this.addCommand({
         id: "clear-unlinked-attachments-current-note-folder",
-        name: "Clear Unlinked Attachments in Current Note Folder (Next to Note mode)",
+        name: isChineseDisplayLanguage()
+          ? "清理当前笔记文件夹中的孤立附件（笔记旁模式）"
+          : "Clear Unlinked Attachments in Current Note Folder (Next to Note mode)",
         callback: () => {
           this.removeOrphans("plugin")();
         },
@@ -203,7 +300,7 @@ export default class LocalImagesPlugin extends Plugin {
         let rootdir = this.settings.mediaFolderPath;
         const useSysTrash = this.app.vault.getConfig("trashOption") === "system";
 
-        if (pathBasename(rootdir).includes("${notename}") && !rootdir.includes("${date}")) {
+        if (pathBasename(rootdir).includes("${notename}")) {
           rootdir = rootdir.replace("${notename}", file.basename);
 
           if (this.settings.attachmentSaveLocation == "nextToNoteS") {
@@ -242,7 +339,7 @@ export default class LocalImagesPlugin extends Plugin {
 
         let oldRootdir = this.settings.mediaFolderPath;
 
-        if (pathBasename(oldRootdir).includes("${notename}") && !oldRootdir.includes("${date}")) {
+        if (pathBasename(oldRootdir).includes("${notename}")) {
           oldRootdir = oldRootdir.replace("${notename}", pathParse(oldPath)?.name);
           let newRootDir = oldRootdir.replace(pathParse(oldPath)?.name, pathParse(file.path)?.name);
           let newRootDir_ = newRootDir;
@@ -276,7 +373,7 @@ export default class LocalImagesPlugin extends Plugin {
 
     this.registerEvent(
       this.app.vault.on("modify", async (file: TFile) => {
-        if (!this.newfMoveReq) return;
+        if (!this.settings.processNewAttachments) return;
         logError("File modified: " + file.path, false);
 
         if (
@@ -287,10 +384,11 @@ export default class LocalImagesPlugin extends Plugin {
         ) {
           return;
         } else {
-          if (this.settings.processNewAttachments) {
-            if (!this.noteModified.includes(file)) {
-              this.noteModified.push(file);
-            }
+          if (!this.noteModified.includes(file)) {
+            this.noteModified.push(file);
+          }
+          if (this.newfCreated.length > 0) {
+            this.newfMoveReq = true;
             this.setupNewMdFilesProcInterval();
           }
         }
@@ -532,7 +630,16 @@ export default class LocalImagesPlugin extends Plugin {
       const fItems = evt.clipboardData.files;
       const tItems = evt.clipboardData.items;
 
-      if (fItems.length != 0 || this.ThePathExcluded(String(activeFile.parent?.path))) {
+      if (fItems.length != 0) {
+        if (activeFile && !this.ThePathExcluded(String(activeFile.parent?.path))) {
+          this.pendingPastedMarkdownFile = activeFile;
+          this.pendingPastedMarkdownTime = Date.now();
+          this.queueAttachmentTargetNote(activeFile);
+        }
+        return;
+      }
+
+      if (this.ThePathExcluded(String(activeFile.parent?.path))) {
         return;
       }
 
@@ -582,13 +689,12 @@ export default class LocalImagesPlugin extends Plugin {
         const orphanedAttachments: TFile[] = [];
         if (
           this.settings.attachmentSaveLocation != "nextToNoteS" ||
-          !pathBasename(oldRootdir).endsWith("${notename}") ||
-          oldRootdir.includes("${date}")
+          !pathBasename(oldRootdir).endsWith("${notename}")
         ) {
           showBalloon(
             isChineseDisplayLanguage()
-              ? `此命令需要启用\u201C保存在笔记旁边的指定文件夹\u201D，并且路径末尾使用\u201C\${notename}\u201D模板，同时路径不能包含\u201C\${date}\u201D模板。\n请先修改设置！\r\n`
-              : "This command requires the settings 'Next to note in the folder specified below' and pattern '${notename}' at the end to be enabled, also the path cannot contain ${date} pattern.\nPlease, change settings first!\r\n",
+              ? `此命令需要启用\u201C保存在笔记旁边的指定文件夹\u201D，并且路径末尾使用\u201C\${notename}\u201D模板。\n请先修改设置！\r\n`
+              : "This command requires the settings 'Next to note in the folder specified below' and pattern '${notename}' at the end to be enabled.\nPlease, change settings first!\r\n",
             this.settings.showNotifications
           );
           return;
@@ -705,7 +811,7 @@ export default class LocalImagesPlugin extends Plugin {
 
     const timeGapMs = Math.abs(Date.now() - file.stat.ctime);
 
-    if (timeGapMs > 1000) return;
+    if (timeGapMs > RECENT_CREATED_FILE_MAX_AGE_MS) return;
 
     logError("func onMdCreateFunc: " + file.path);
     logError(file, true);
@@ -734,19 +840,23 @@ export default class LocalImagesPlugin extends Plugin {
 
     const timeGapMs = Math.abs(Date.now() - file.stat.mtime);
 
-    if (timeGapMs > 1000) return;
+    if (timeGapMs > RECENT_CREATED_FILE_MAX_AGE_MS) return;
 
     this.newfCreated.push(file.path);
     this.newfMoveReq = true;
+
     const activeMarkdownFile = this.app.workspace.getActiveFile();
+    const pendingMarkdownFile =
+      Date.now() - this.pendingPastedMarkdownTime < RECENT_CREATED_FILE_MAX_AGE_MS
+        ? this.pendingPastedMarkdownFile
+        : null;
     const targetMarkdownFile =
       activeMarkdownFile && this.ExemplaryOfMD(activeMarkdownFile.path)
         ? activeMarkdownFile
-        : this.latestCreatedMarkdownFile;
+        : pendingMarkdownFile ?? this.latestCreatedMarkdownFile;
 
-    if (targetMarkdownFile && !this.noteModified.includes(targetMarkdownFile)) {
-      this.noteModified.push(targetMarkdownFile);
-    }
+    this.queueAttachmentTargetNote(targetMarkdownFile);
+
     this.setupNewMdFilesProcInterval();
     logError("file created  ");
   }
@@ -776,6 +886,8 @@ export default class LocalImagesPlugin extends Plugin {
       th.newfCreatedByDownloader = [];
       th.noteModified = [];
       th.newfMoveReq = false;
+      th.pendingPastedMarkdownFile = null;
+      th.pendingPastedMarkdownTime = 0;
       window.clearInterval(th.newfProcInt);
       th.newfProcInt = 0;
     }
@@ -804,7 +916,7 @@ export default class LocalImagesPlugin extends Plugin {
 
         const mdir = await getMDir(this.app, note, this.settings);
         const obsmdir = await getMDir(this.app, note, this.settings, true);
-        let embeds = metaCache?.embeds;
+        const embeds = this.getEmbeddedAttachments(metaCache?.embeds, filedata);
 
         if (obsmdir != "" && !(await this.app.vault.adapter.exists(obsmdir))) {
           if (!this.settings.skipObsidianFolderCreation) {
@@ -820,24 +932,24 @@ export default class LocalImagesPlugin extends Plugin {
           return;
         }
 
-        if (embeds || pr) {
+        if (embeds.length > 0 || pr) {
           await this.ensureFolderExists(mdir);
 
           for (let el of embeds) {
             logError(el);
 
             let oldpath = pathJoin([obsmdir, pathBasename(el.link)]);
-            let oldtag = el["original"];
+            let oldtag = el.original;
             logError(useMdLinks);
 
             logError(this.newfCreated);
 
-            if (
-              (this.newfCreated.indexOf(el.link) != -1 ||
-                (obsmdir != "" &&
-                  (this.newfCreated.includes(oldpath) || this.newfCreated.includes(el.link)))) &&
-              !this.newfCreatedByDownloader.includes(oldtag)
-            ) {
+            let isMatch =
+              this.newfCreated.indexOf(el.link) != -1 ||
+              this.newfCreated.includes(oldpath) ||
+              this.newfCreated.some((p) => pathBasename(p) === pathBasename(el.link));
+
+            if (isMatch && !this.newfCreatedByDownloader.includes(oldtag)) {
               if (!(await this.app.vault.adapter.exists(oldpath))) {
                 logError("Cannot find " + el.link + " skipping...");
                 continue;
@@ -880,7 +992,11 @@ export default class LocalImagesPlugin extends Plugin {
                 newMD5 = md5Sig(newBinData);
                 logError(newBinData);
                 if (newBinData != null) {
-                  const duplicateFile = await this.findDuplicateAttachmentByHash(mdir, newMD5);
+                  const duplicateFile = await this.findDuplicateAttachmentByHash(
+                    mdir,
+                    newMD5,
+                    oldpath
+                  );
 
                   if (duplicateFile) {
                     newpath = duplicateFile.path;
@@ -891,8 +1007,15 @@ export default class LocalImagesPlugin extends Plugin {
                   }
                   newlink = await getRDir(note, this.settings, newpath);
                 }
-              } else if (this.settings.useTimestampNaming) {
-                const duplicateFile = await this.findDuplicateAttachmentByHash(mdir, oldMD5);
+              } else if (
+                (IMAGE_EXTENSIONS.has(fileExt) && this.settings.useTimestampNaming) ||
+                (!IMAGE_EXTENSIONS.has(fileExt) && this.settings.useTimestampNamingForAttachments)
+              ) {
+                const duplicateFile = await this.findDuplicateAttachmentByHash(
+                  mdir,
+                  oldMD5,
+                  oldpath
+                );
                 if (duplicateFile) {
                   newpath = duplicateFile.path;
                 } else {
@@ -903,7 +1026,7 @@ export default class LocalImagesPlugin extends Plugin {
                   );
                 }
                 newlink = await getRDir(note, this.settings, newpath);
-              } else if (!this.settings.useTimestampNaming) {
+              } else {
                 newpath = pathJoin([mdir, cFileName(pathBasename(el.link))]);
                 newlink = await getRDir(note, this.settings, newpath);
               }

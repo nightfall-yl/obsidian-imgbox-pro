@@ -20,9 +20,10 @@ function getObsidianLang(): "zh-CN" | "en" {
 
 const LOCALE_TEXT: Record<string, Record<string, string>> = {
   "zh-CN": {
-    navGeneral: "通用",
     navLocalize: "图片本地化",
-    navPreview: "图片预览",
+    navPreview: "图片管理",
+    subgroupAutoTriggerTitle: "自动触发",
+    subgroupUIGlobalTitle: "界面与全局",
     subgroupPreviewTitle: "图片预览",
     subgroupCleanupTitle: "图片清理",
     showNotifications: "显示通知",
@@ -41,13 +42,16 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     processNewMarkdownDesc: "处理新建或同步得到的 Markdown 类文件。",
     processNewAttachments: "处理所有新附件",
     processNewAttachmentsDesc: "将所有新附件从 Obsidian 默认附件目录移动到插件管理的位置。",
-    useTimestampNaming: "新附件使用时间+MD5命名",
+    useTimestampNaming: "新图片使用时间+MD5命名",
     useTimestampNamingDesc:
-      "对新粘贴或拖入的附件使用 YYYYMMDD-HHmmss-md5前6位 命名，同时保留去重能力。",
+      "对新粘贴或拖入的图片使用 YYYYMMDD-HHmmss-md5前6位 命名，同时保留去重能力。",
+    useTimestampNamingForAttachments: "新附件使用时间+MD5命名",
+    useTimestampNamingForAttachmentsDesc:
+      "对新粘贴或拖入的非图片附件使用 YYYYMMDD-HHmmss-md5前6位 命名，同时保留去重能力。",
     subgroupDownloadTitle: "下载行为",
     subgroupCompressionTitle: "图片压缩",
     subgroupNamingTitle: "命名与链接",
-    subgroupStorageTitle: "存储路径",
+    subgroupStorageNamingTitle: "存储命名",
     downloadRetryCount: "单个附件重试次数",
     downloadRetryCountDesc: "下载附件失败时的重试次数。",
     downloadRetryCountInvalid: "请输入 1 到 6 之间的正整数！",
@@ -74,12 +78,10 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     fullPath: "完整路径",
     relativePath: "相对于笔记",
     filenameOnly: "仅文件名",
-    dateFormat: "日期格式",
-    dateFormatDesc: "媒体文件夹中 `${date}` 模板使用的日期格式。",
     unsafeFolderName: "文件夹名称不安全！某些字符在部分文件系统中不可用。",
     attachmentSaveLocation: "新附件保存位置",
     attachmentSaveLocationDesc:
-      "选择所有新附件的保存位置。可使用 `_resources/${date}/${notename}` 这类模板。",
+      "选择所有新附件的保存位置。可使用 `_resources/${notename}` 这类模板。",
     followObsidian: "跟随 Obsidian 设置",
     saveToRoot: "保存到下方指定的根目录",
     saveNextToNote: "保存在笔记旁边的指定文件夹",
@@ -120,9 +122,10 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     debugModeDesc: "在控制台输出插件调试信息。",
   },
   en: {
-    navGeneral: "General",
     navLocalize: "Localize",
-    navPreview: "Preview",
+    navPreview: "Image Management",
+    subgroupAutoTriggerTitle: "Auto Trigger",
+    subgroupUIGlobalTitle: "UI & Global",
     subgroupPreviewTitle: "Image Preview",
     subgroupCleanupTitle: "Image Cleanup",
     showNotifications: "Show notifications",
@@ -143,13 +146,16 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     processNewAttachments: "Process all new attachments",
     processNewAttachmentsDesc:
       "Move new attachments from the default Obsidian attachment folder into the plugin-managed location.",
-    useTimestampNaming: "Use time + MD5 names for new attachments",
+    useTimestampNaming: "Use time + MD5 names for new images",
     useTimestampNamingDesc:
-      "Rename newly pasted or dropped attachments as YYYYMMDD-HHmmss-md5-first-6 while keeping deduplication.",
+      "Rename newly pasted or dropped images as YYYYMMDD-HHmmss-md5-first-6 while keeping deduplication.",
+    useTimestampNamingForAttachments: "Use time + MD5 names for new attachments",
+    useTimestampNamingForAttachmentsDesc:
+      "Rename newly pasted or dropped non-image attachments as YYYYMMDD-HHmmss-md5-first-6 while keeping deduplication.",
     subgroupDownloadTitle: "Download Behavior",
     subgroupCompressionTitle: "Image Compression",
     subgroupNamingTitle: "Naming & Links",
-    subgroupStorageTitle: "Storage Path",
+    subgroupStorageNamingTitle: "Storage & Naming",
     downloadRetryCount: "Retry count per attachment",
     downloadRetryCountDesc: "How many times to retry when attachment downloads fail.",
     downloadRetryCountInvalid: "Please enter an integer between 1 and 6.",
@@ -179,13 +185,11 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     fullPath: "Full path",
     relativePath: "Relative to note",
     filenameOnly: "Filename only",
-    dateFormat: "Date format",
-    dateFormatDesc: "Date format used by the `${date}` template in media folders.",
     unsafeFolderName:
       "Unsafe folder name. Some characters are not supported on certain file systems.",
     attachmentSaveLocation: "Save location for new attachments",
     attachmentSaveLocationDesc:
-      "Choose where new attachments are stored. Templates like `_resources/${date}/${notename}` are supported.",
+      "Choose where new attachments are stored. Templates like `_resources/${notename}` are supported.",
     followObsidian: "Follow Obsidian settings",
     saveToRoot: "Save to the root folder specified below",
     saveNextToNote: "Save in the specified folder next to the note",
@@ -350,7 +354,6 @@ export default class SettingTab extends PluginSettingTab {
 
     containerEl.createEl("h1", { text: APP_NAME });
     const sections: SettingsSection[] = [
-      { id: "general", label: t("navGeneral"), icon: "settings-2" },
       { id: "localize", label: t("navLocalize"), icon: "panel-left" },
       { id: "preview", label: t("navPreview"), icon: "image" },
     ];
@@ -388,32 +391,14 @@ export default class SettingTab extends PluginSettingTab {
       }
     });
 
-    // ===================== 通用 =====================
-    const generalEl = sectionEls.get("general")!;
-    const generalGroupEl = this.createSettingGroup(generalEl);
+    // ===================== 图片本地化 =====================
+    const localizeEl = sectionEls.get("localize")!;
 
-    new Setting(generalGroupEl)
-      .setName(t("showNotifications"))
-      .setDesc(t("showNotificationsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.showNotifications).onChange(async (value) => {
-          this.plugin.settings.showNotifications = value;
-          await this.plugin.saveSettings();
-        })
-      );
+    // ── 自动触发 ──
+    localizeEl.createEl("h3", { text: t("subgroupAutoTriggerTitle"), cls: "lip-settings-subgroup-title" });
+    const triggerGroupEl = this.createSettingGroup(localizeEl);
 
-    new Setting(generalGroupEl)
-      .setName(t("showCleanupRibbon"))
-      .setDesc(t("showCleanupRibbonDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.showCleanupRibbon).onChange(async (value) => {
-          this.plugin.settings.showCleanupRibbon = value;
-          await this.plugin.saveSettings();
-          this.plugin.refreshRibbonIcons();
-        })
-      );
-
-    new Setting(generalGroupEl)
+    new Setting(triggerGroupEl)
       .setName(t("autoProcess"))
       .setDesc(t("autoProcessDesc"))
       .addToggle((toggle) =>
@@ -424,7 +409,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    this.addNumberSetting(generalGroupEl, {
+    this.addNumberSetting(triggerGroupEl, {
       name: t("autoProcessInterval"),
       desc: t("autoProcessIntervalDesc"),
       value: this.plugin.settings.autoProcessInterval,
@@ -439,7 +424,7 @@ export default class SettingTab extends PluginSettingTab {
       invalidMessage: t("autoProcessIntervalInvalid"),
     });
 
-    new Setting(generalGroupEl)
+    new Setting(triggerGroupEl)
       .setName(t("processNewMarkdown"))
       .setDesc(t("processNewMarkdownDesc"))
       .addToggle((toggle) =>
@@ -449,30 +434,128 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    // ---- 批量命令（直接显示）----
-    new Setting(generalGroupEl)
-      .setName(t("showBatchCommands"))
-      .setDesc(t("showBatchCommandsDesc"))
+    // ── 存储命名 ──
+    localizeEl.createEl("h3", { text: t("subgroupStorageNamingTitle"), cls: "lip-settings-subgroup-title" });
+    const storageNamingGroupEl = this.createSettingGroup(localizeEl);
+
+    new Setting(storageNamingGroupEl)
+      .setName(t("processNewAttachments"))
+      .setDesc(t("processNewAttachmentsDesc"))
       .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.showBatchCommands).onChange(async (value) => {
-          this.plugin.settings.showBatchCommands = value;
+        toggle.setValue(this.plugin.settings.processNewAttachments).onChange(async (value) => {
+          this.plugin.settings.processNewAttachments = value;
           await this.plugin.saveSettings();
         })
       );
 
-    // ---- 开发者选项（直接显示）----
-    new Setting(generalGroupEl)
-      .setName(t("debugMode"))
-      .setDesc(t("debugModeDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(isDebugMode()).onChange(async (value) => {
-          setDebugMode(value);
+    new Setting(storageNamingGroupEl)
+      .setName(t("attachmentSaveLocation"))
+      .setDesc(t("attachmentSaveLocationDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("obsFolder", t("followObsidian"))
+          .addOption("nextToNoteS", t("saveNextToNote"))
+          .addOption("inFolderBelow", t("saveToRoot"))
+          .setValue(this.plugin.settings.attachmentSaveLocation)
+          .onChange(async (value) => {
+            this.plugin.settings.attachmentSaveLocation = value;
+            await this.plugin.saveSettings();
+            this.toggleMediaFolderSettings(localizeEl);
+          })
+      );
+
+    new Setting(storageNamingGroupEl)
+      .setName(t("mediaFolderPath"))
+      .setDesc(t("mediaFolderPathDesc"))
+      .setClass("media_folder_set")
+      .addText((text) =>
+        text.setValue(this.plugin.settings.mediaFolderPath).onChange(async (value) => {
+          if (value.match(/(\)|\(|\"|\'|\#|\]|\[|\:|\>|\<|\*|\|)/g) !== null) {
+            displayError(t("unsafeFolderName"));
+            return;
+          }
+          this.plugin.settings.mediaFolderPath = value;
           await this.plugin.saveSettings();
         })
       );
 
-    // ===================== 图片本地化 =====================
-    const localizeEl = sectionEls.get("localize")!;
+    new Setting(storageNamingGroupEl)
+      .setName(t("syncMediaFolder"))
+      .setDesc(t("syncMediaFolderDesc"))
+      .setClass("media_folder_set")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.syncMediaFolder).onChange(async (value) => {
+          this.plugin.settings.syncMediaFolder = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(storageNamingGroupEl)
+      .setName(t("useTimestampNaming"))
+      .setDesc(t("useTimestampNamingDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.useTimestampNaming).onChange(async (value) => {
+          this.plugin.settings.useTimestampNaming = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(storageNamingGroupEl)
+      .setName(t("useTimestampNamingForAttachments"))
+      .setDesc(t("useTimestampNamingForAttachmentsDesc"))
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.useTimestampNamingForAttachments)
+          .onChange(async (value) => {
+            this.plugin.settings.useTimestampNamingForAttachments = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(storageNamingGroupEl)
+      .setName(t("appendOriginalName"))
+      .setDesc(t("appendOriginalNameDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.appendOriginalName).onChange(async (value) => {
+          this.plugin.settings.appendOriginalName = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(storageNamingGroupEl)
+      .setName(t("preserveCaptions"))
+      .setDesc(t("preserveCaptionsDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.preserveCaptions).onChange(async (value) => {
+          this.plugin.settings.preserveCaptions = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(storageNamingGroupEl)
+      .setName(t("linkPathFormat"))
+      .setDesc(t("linkPathFormatDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("baseFileName", t("filenameOnly"))
+          .addOption("onlyRelative", t("relativePath"))
+          .addOption("fullDirPath", t("fullPath"))
+          .setValue(this.plugin.settings.linkPathFormat)
+          .onChange(async (value) => {
+            this.plugin.settings.linkPathFormat = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(storageNamingGroupEl)
+      .setName(t("skipObsidianFolderCreation"))
+      .setDesc(t("skipObsidianFolderCreationDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.skipObsidianFolderCreation).onChange(async (value) => {
+          this.plugin.settings.skipObsidianFolderCreation = value;
+          await this.plugin.saveSettings();
+        })
+      );
 
     // ── 下载行为 ──
     localizeEl.createEl("h3", { text: t("subgroupDownloadTitle"), cls: "lip-settings-subgroup-title" });
@@ -584,140 +667,7 @@ export default class SettingTab extends PluginSettingTab {
 
     this.toggleCompressionOptions(compressionOptionsEl, this.plugin.settings.compressImage);
 
-    // ── 命名与链接 ──
-    localizeEl.createEl("h3", { text: t("subgroupNamingTitle"), cls: "lip-settings-subgroup-title" });
-    const namingGroupEl = this.createSettingGroup(localizeEl);
-
-    new Setting(namingGroupEl)
-      .setName(t("useTimestampNaming"))
-      .setDesc(t("useTimestampNamingDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.useTimestampNaming).onChange(async (value) => {
-          this.plugin.settings.useTimestampNaming = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(namingGroupEl)
-      .setName(t("preserveCaptions"))
-      .setDesc(t("preserveCaptionsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.preserveCaptions).onChange(async (value) => {
-          this.plugin.settings.preserveCaptions = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(namingGroupEl)
-      .setName(t("linkPathFormat"))
-      .setDesc(t("linkPathFormatDesc"))
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("fullDirPath", t("fullPath"))
-          .addOption("onlyRelative", t("relativePath"))
-          .addOption("baseFileName", t("filenameOnly"))
-          .setValue(this.plugin.settings.linkPathFormat)
-          .onChange(async (value) => {
-            this.plugin.settings.linkPathFormat = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    // ── 存储路径 ──
-    localizeEl.createEl("h3", { text: t("subgroupStorageTitle"), cls: "lip-settings-subgroup-title" });
-    const storageGroupEl = this.createSettingGroup(localizeEl);
-
-    new Setting(storageGroupEl)
-      .setName(t("processNewAttachments"))
-      .setDesc(t("processNewAttachmentsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.processNewAttachments).onChange(async (value) => {
-          this.plugin.settings.processNewAttachments = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(storageGroupEl)
-      .setName(t("attachmentSaveLocation"))
-      .setDesc(t("attachmentSaveLocationDesc"))
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("obsFolder", t("followObsidian"))
-          .addOption("inFolderBelow", t("saveToRoot"))
-          .addOption("nextToNoteS", t("saveNextToNote"))
-          .setValue(this.plugin.settings.attachmentSaveLocation)
-          .onChange(async (value) => {
-            this.plugin.settings.attachmentSaveLocation = value;
-            await this.plugin.saveSettings();
-            this.toggleMediaFolderSettings(localizeEl);
-          })
-      );
-
-    new Setting(storageGroupEl)
-      .setName(t("mediaFolderPath"))
-      .setDesc(t("mediaFolderPathDesc"))
-      .setClass("media_folder_set")
-      .addText((text) =>
-        text.setValue(this.plugin.settings.mediaFolderPath).onChange(async (value) => {
-          if (value.match(/(\)|\(|\"|\'|\#|\]|\[|\:|\>|\<|\*|\|)/g) !== null) {
-            displayError(t("unsafeFolderName"));
-            return;
-          }
-          this.plugin.settings.mediaFolderPath = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(storageGroupEl)
-      .setName(t("dateFormat"))
-      .setDesc(t("dateFormatDesc"))
-      .addText((text) =>
-        text.setValue(this.plugin.settings.dateFormat).onChange(async (value) => {
-          if (value.match(/(\)|\(|\"|\'|\#|\]|\[|\:|\>|\<|\*|\|)/g) !== null) {
-            displayError(t("unsafeFolderName"));
-            return;
-          }
-          this.plugin.settings.dateFormat = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(storageGroupEl)
-      .setName(t("syncMediaFolder"))
-      .setDesc(t("syncMediaFolderDesc"))
-      .setClass("media_folder_set")
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.syncMediaFolder).onChange(async (value) => {
-          this.plugin.settings.syncMediaFolder = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    // ── 高级选项 ──
-    localizeEl.createEl("h3", { text: t("localizeAdvancedTitle"), cls: "lip-settings-subgroup-title" });
-    const advancedGroupEl = this.createSettingGroup(localizeEl);
-
-    new Setting(advancedGroupEl)
-      .setName(t("appendOriginalName"))
-      .setDesc(t("appendOriginalNameDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.appendOriginalName).onChange(async (value) => {
-          this.plugin.settings.appendOriginalName = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(advancedGroupEl)
-      .setName(t("skipObsidianFolderCreation"))
-      .setDesc(t("skipObsidianFolderCreationDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.skipObsidianFolderCreation).onChange(async (value) => {
-          this.plugin.settings.skipObsidianFolderCreation = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    // ===================== 图片预览 =====================
+    // ── 图片预览 ──
     const previewEl = sectionEls.get("preview")!;
 
     previewEl.createEl("h3", { text: t("subgroupPreviewTitle"), cls: "lip-settings-subgroup-title" });
@@ -779,6 +729,17 @@ export default class SettingTab extends PluginSettingTab {
 
     previewEl.createEl("h3", { text: t("subgroupCleanupTitle"), cls: "lip-settings-subgroup-title" });
     const cleanupGroupEl = this.createSettingGroup(previewEl);
+
+    new Setting(cleanupGroupEl)
+      .setName(t("showCleanupRibbon"))
+      .setDesc(t("showCleanupRibbonDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showCleanupRibbon).onChange(async (value) => {
+          this.plugin.settings.showCleanupRibbon = value;
+          await this.plugin.saveSettings();
+          this.plugin.refreshRibbonIcons();
+        })
+      );
 
     new Setting(cleanupGroupEl)
       .setName(t("deleteDestination"))
@@ -852,6 +813,40 @@ export default class SettingTab extends PluginSettingTab {
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.excludeSubfolders).onChange(async (value) => {
           this.plugin.settings.excludeSubfolders = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    // ── 界面与全局 ──
+    previewEl.createEl("h3", { text: t("subgroupUIGlobalTitle"), cls: "lip-settings-subgroup-title" });
+    const uiGlobalGroupEl = this.createSettingGroup(previewEl);
+
+    new Setting(uiGlobalGroupEl)
+      .setName(t("showNotifications"))
+      .setDesc(t("showNotificationsDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showNotifications).onChange(async (value) => {
+          this.plugin.settings.showNotifications = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(uiGlobalGroupEl)
+      .setName(t("showBatchCommands"))
+      .setDesc(t("showBatchCommandsDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showBatchCommands).onChange(async (value) => {
+          this.plugin.settings.showBatchCommands = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(uiGlobalGroupEl)
+      .setName(t("debugMode"))
+      .setDesc(t("debugModeDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(isDebugMode()).onChange(async (value) => {
+          setDebugMode(value);
           await this.plugin.saveSettings();
         })
       );

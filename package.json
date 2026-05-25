@@ -1,11 +1,11 @@
 {
   "name": "imgbox-pro",
-  "version": "26.5.4",
+  "version": "26.5.6",
   "description": "ImgBox Pro is an Obsidian plugin for localizing images, cleaning unused attachments, and enhancing image interactions.",
   "main": "build/main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
-    "build": "rollup --config rollup.config.js --environment BUILD:production && cp manifest.json styles.css dist/",
+    "build": "rollup --config rollup.config.js --environment BUILD:production && cp manifest.json styles.css dist/ && cp dist/main.js main.js",
     "version": "json -I -f manifest.json -e \"this.version='$npm_package_version'\" && json -I -f versions.json -e \"this['$npm_package_version']='$(cat manifest.json | json minAppVersion)'\""
   },
   "keywords": [],
@@ -27,7 +27,6 @@
   "dependencies": {
     "async-lock": "^1.4.0",
     "crypto-js": "^4.1.1",
-    "filenamify": "github:Sergei-Korneev/filenamify",
-    "moment": "^2.30.1"
+    "filenamify": "github:Sergei-Korneev/filenamify"
   }
 }

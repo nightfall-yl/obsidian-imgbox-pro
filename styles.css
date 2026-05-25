@@ -122,12 +122,10 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
   z-index: 1000;
 }
 
-/* Settings: base variables */
+/* Settings: base */
 .lip-settings-root {
   --lip-settings-group-padding: 0 var(--size-4-4);
   --lip-settings-group-radius: 12px;
-  --lip-settings-group-bg: var(--background-secondary);
-  --lip-settings-group-border: 1px solid var(--background-modifier-border);
   --lip-settings-nav-font-size: 15px;
   --lip-settings-nav-font-weight: 600;
   padding-bottom: var(--size-4-6);
@@ -147,20 +145,21 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
 }
 
 .lip-settings-group {
-  margin-top: 0;
+  margin: 18px 0 28px;
   padding: var(--lip-settings-group-padding);
   border-radius: var(--lip-settings-group-radius);
-  background: var(--lip-settings-group-bg);
-}
-
-.lip-settings-group + .lip-settings-group {
-  margin-top: var(--size-4-6);
+  background: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  overflow: hidden;
 }
 
 .lip-settings-group .setting-item {
-  padding: var(--size-4-4) 0;
-  border-top: var(--lip-settings-group-border);
+  margin: 0 !important;
+  padding: 18px 0;
+  background: transparent !important;
+  border-top: 1px solid var(--background-modifier-border);
   border-radius: 0;
+  box-shadow: none !important;
 }
 
 .lip-settings-group .setting-item:first-child {
@@ -204,7 +203,7 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
   cursor: pointer;
   box-shadow: none;
   outline: none;
-  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease, transform 140ms ease;
+  transition: background-color 140ms ease, color 140ms ease;
 }
 
 .lip-settings-nav-btn:hover {
@@ -270,13 +269,24 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
 /* ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 720px) {
   .lip-settings-root {
-    --lip-settings-group-bg: var(--background-primary);
-    --lip-settings-group-padding: 0 var(--size-4-3);
+    --lip-settings-group-padding: 0 14px;
     --lip-settings-group-radius: 16px;
   }
 
-  .lip-settings-group + .lip-settings-group {
-    margin-top: var(--size-4-4);
+  /* 移动端亮色：卡片用纯白（--background-primary），与页面底色形成对比 */
+  .theme-light .lip-settings-group {
+    background: var(--background-primary);
+    margin: 12px 0 22px;
+  }
+
+  /* 移动端暗色：卡片用 --background-primary-alt（比 secondary 浅） */
+  .theme-dark .lip-settings-group {
+    background: var(--background-primary-alt);
+    margin: 12px 0 22px;
+  }
+
+  .lip-settings-group .setting-item {
+    padding: 14px 0;
   }
 
   .lip-settings-root .lip-settings-subgroup-title {
@@ -296,18 +306,6 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
   .lip-settings-nav-btn.is-active {
     background: var(--background-modifier-hover);
     border-radius: 6px;
-  }
-
-  .lip-settings-dependent {
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: var(--size-4-3);
-    border-radius: 0 6px 6px 0;
-  }
-
-  .lip-settings-danger-warning {
-    font-size: var(--font-ui-smaller);
-    padding: var(--size-4-2) var(--size-4-3);
   }
 }
 
@@ -338,12 +336,9 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
   transition: max-height 200ms ease-out, opacity 200ms ease-out, margin-top 200ms ease-out;
   padding-left: 20px;
   border-left: 2px solid var(--interactive-accent);
-  margin-left: -8px;
-  margin-right: -8px;
   padding-top: 8px;
   padding-bottom: 8px;
   background: color-mix(in srgb, var(--interactive-accent) 3%, transparent);
-  border-radius: 0 6px 6px 0;
 }
 
 .lip-settings-dependent.is-hidden {

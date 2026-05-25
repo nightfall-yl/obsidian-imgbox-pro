@@ -1,5 +1,5 @@
 export const APP_NAME = "ImgBox Pro";
-export const APP_VERSION = "2026.3";
+export const APP_VERSION = "2026.3.1";
 export const APP_TITLE = `${APP_NAME}  ${APP_VERSION}`;
 
 // Debug mode — replaces the old VERBOSE module variable and previewDebug setting
@@ -62,6 +62,7 @@ export interface ISettings {
   processNewMarkdown: boolean;
   processNewAttachments: boolean;
   useTimestampNaming: boolean;
+  useTimestampNamingForAttachments: boolean;
   // ---- 开发者选项 ----
   includePattern: string;
   includePatternRegex: string;
@@ -78,7 +79,6 @@ export interface ISettings {
   preserveCaptions: boolean;
   appendOriginalName: boolean;
   linkPathFormat: string;
-  dateFormat: string;
   attachmentSaveLocation: string;
   syncMediaFolder: boolean;
   mediaFolderPath: string;
@@ -108,6 +108,7 @@ export const DEFAULT_SETTINGS: ISettings = {
   processNewMarkdown: true,
   processNewAttachments: true,
   useTimestampNaming: true,
+  useTimestampNamingForAttachments: true,
   // 开发者选项
   includePattern: "md|canvas",
   includePatternRegex: "(?<md>.*\\.md)|(?<canvas>.*\\.canvas)",
@@ -124,7 +125,6 @@ export const DEFAULT_SETTINGS: ISettings = {
   preserveCaptions: true,
   appendOriginalName: true,
   linkPathFormat: "fullDirPath",
-  dateFormat: "YYYY MM DD",
   attachmentSaveLocation: "obsFolder",
   syncMediaFolder: true,
   mediaFolderPath: "_resources/${notename}",
