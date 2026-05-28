@@ -1,10 +1,21 @@
-import { App, Notice, Platform, PluginSettingTab, Setting, setIcon } from "obsidian";
+import {
+  App,
+  Notice,
+  Platform,
+  PluginSettingTab,
+  Setting,
+  SettingGroup,
+  TFile,
+  setIcon,
+} from "obsidian";
 
 import { displayError, logError, trimAny } from "./utils";
 
-import { APP_NAME, setDebugMode, isDebugMode } from "./config";
+import { APP_NAME } from "./config";
 
 import LocalImagesPlugin from "./main";
+import { getMDir, getRDir } from "./contentProcessor";
+import { generateTimestampRandomName, pathJoin } from "./utils";
 
 type SettingsSection = {
   id: string;
@@ -23,13 +34,11 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     navLocalize: "图片本地化",
     navPreview: "图片管理",
     subgroupAutoTriggerTitle: "自动触发",
-    subgroupUIGlobalTitle: "界面与全局",
+    subgroupGlobalTitle: "界面与全局",
     subgroupPreviewTitle: "图片预览",
     subgroupCleanupTitle: "图片清理",
     showNotifications: "显示通知",
-    showNotificationsDesc: "处理页面后显示通知。",
-    showBatchCommands: "显示批量命令",
-    showBatchCommandsDesc: "重新加载插件后，显示批量本地化和当前笔记目录清理等批量命令。",
+    showNotificationsDesc: "控制成功和状态提示是否弹出；错误提示仍会显示。",
     showCleanupRibbon: "显示图片清理 Ribbon 图标",
     showCleanupRibbonDesc:
       "在左侧功能区显示图片清理快捷按钮。它是\u201cClear Unused Images in Vault\u201d的快捷入口，按钮文案会跟随 Obsidian 显示语言切换。",
@@ -108,31 +117,43 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     excludedFoldersPlaceholder: "每行输入一个完整路径，例如 RootFolder/Subfolder",
     clickPreviewEnabled: "单击预览图片",
     clickPreviewEnabledDesc:
-      "单击图片中间区域可打开可缩放的预览视图，再次单击可关闭预览；边缘区域保留给尺寸调整。",
+      "单击图片中间区域可打开可缩放的预览视图，再次单击可关闭预览。",
     previewMobileDesc: "移动端使用 Obsidian 内置图片查看器，无需额外配置。",
     previewAdaptiveRatio: "自适应显示比例",
     previewAdaptiveRatioDesc: "当预览图片大于窗口时，按设定比例自适应缩放。",
     previewAdaptiveRatioNotice: "自适应比例",
-    dragResizeEnabled: "拖拽缩放图片",
-    dragResizeEnabledDesc: "在源码模式或实时预览模式下，启用图片和视频的拖拽缩放。",
-    dragResizeStep: "缩放步进",
-    dragResizeStepDesc: "拖拽缩放时的最小刻度。设为 0 表示不启用对齐。",
-    dragResizeStepInvalid: "请输入正整数或 0。",
-    debugMode: "调试模式",
-    debugModeDesc: "在控制台输出插件调试信息。",
+    configPreviewTitle: "当前配置预览",
+    configPreviewHint: "会按当前设置和当前笔记动态计算。",
+    previewCurrentNote: "当前笔记",
+    previewAttachmentDir: "最终附件目录",
+    previewLinkExample: "链接写法示例",
+    previewNameExample: "命名示例",
+    previewImageNameExample: "图片",
+    previewAttachmentNameExample: "附件",
+    previewFallbackNote: "示例/示例笔记.md",
+    commandPaletteSummary: "查看命令面板入口说明（默认固定显示）",
+    cmdLocalizeObsidian: "本地化当前笔记附件（Obsidian 位置）",
+    cmdLocalizeObsidianDesc: "将当前笔记中的外部图片链接（网页 URL、base64）下载到 Obsidian 默认的附件目录，并自动改写笔记中的链接指向本地文件。",
+    cmdLocalizePlugin: "本地化当前笔记附件（自定义位置）",
+    cmdLocalizePluginDesc: "将当前笔记中的外部图片链接（网页 URL、base64）下载到插件管理的目录（如 _resources/笔记名/），并自动改写笔记中的链接指向本地文件。",
+    cmdBatchLocalize: "批量本地化所有笔记的附件",
+    cmdBatchLocalizeDesc: "遍历整个 vault 的所有 .md 文件，按照你设置的附件保存位置处理每篇笔记中的外部链接。适合首次安装时做历史数据迁移或定期维护。",
+    cmdClearImages: "清理库中未引用的图片（Ribbon 栏）",
+    cmdClearImagesDesc: "扫描全库所有 .md 文件的引用关系，找出未被任何笔记引用的孤立图片文件并删除或移入回收站。仅处理图片类型。此命令也是 Ribbon 按钮的默认操作。",
+    cmdClearAttachments: "清理库中未引用的附件（全库）",
+    cmdClearAttachmentsDesc: "同上逻辑，但范围更广——不仅包含图片，还清理 PDF、ZIP、MP3、MP4 等所有非图片类型的孤立附件。面向整个 vault。",
+    cmdClearOrphans: "清理当前笔记文件夹中的孤立附件（笔记旁模式）",
+    cmdClearOrphansDesc: "仅当附件保存方式为「保存在笔记旁边」且模板以 ${notename} 结尾时可用。只扫描当前笔记对应的附件子文件夹，删除其中未被引用的文件。",
   },
   en: {
     navLocalize: "Localize",
     navPreview: "Image Management",
     subgroupAutoTriggerTitle: "Auto Trigger",
-    subgroupUIGlobalTitle: "UI & Global",
+    subgroupGlobalTitle: "UI & Global",
     subgroupPreviewTitle: "Image Preview",
     subgroupCleanupTitle: "Image Cleanup",
     showNotifications: "Show notifications",
-    showNotificationsDesc: "Show notifications after pages are processed.",
-    showBatchCommands: "Show batch commands",
-    showBatchCommandsDesc:
-      "After reloading the plugin, show batch localization and current-note-folder cleanup commands.",
+    showNotificationsDesc: "Control whether success and status toasts appear. Errors will still show.",
     showCleanupRibbon: "Show cleanup Ribbon icon",
     showCleanupRibbonDesc:
       'Show the cleanup shortcut in the left Ribbon. It is a shortcut for "Clear Unused Images in Vault", and its label follows Obsidian\'s display language.',
@@ -220,20 +241,40 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     excludedFoldersPlaceholder: "Enter one full path per line, for example RootFolder/Subfolder",
     clickPreviewEnabled: "Click to preview image",
     clickPreviewEnabledDesc:
-      "Click the center area of an image to open a zoomable preview, and click again to close it. The edges stay available for resizing.",
+      "Click the center area of an image to open a zoomable preview, and click again to close it.",
     previewMobileDesc: "Mobile uses the built-in Obsidian image viewer. No configuration needed.",
     previewAdaptiveRatio: "Adaptive display ratio",
     previewAdaptiveRatioDesc:
       "When the preview image is larger than the window, scale it adaptively.",
     previewAdaptiveRatioNotice: "Adaptive ratio",
-    dragResizeEnabled: "Drag to resize images",
-    dragResizeEnabledDesc:
-      "Enable drag resizing for images and videos in source mode or live preview.",
-    dragResizeStep: "Resize step",
-    dragResizeStepDesc: "Minimum resize step when dragging. Set 0 to disable snapping.",
-    dragResizeStepInvalid: "Please enter a positive integer or 0.",
-    debugMode: "Debug mode",
-    debugModeDesc: "Output plugin debug information to the console.",
+    configPreviewTitle: "Current configuration preview",
+    configPreviewHint: "This is calculated from the current settings and active note.",
+    previewCurrentNote: "Current note",
+    previewAttachmentDir: "Final attachment folder",
+    previewLinkExample: "Link example",
+    previewNameExample: "Naming example",
+    previewImageNameExample: "Image",
+    previewAttachmentNameExample: "Attachment",
+    previewFallbackNote: "Example/Example Note.md",
+    commandPaletteSummary: "View command palette entry descriptions (always shown)",
+    cmdLocalizeObsidian: "Localize attachments for the current note (Obsidian location)",
+    cmdLocalizeObsidianDesc:
+      "Download external image links (web URLs, base64) in the current note to the Obsidian default attachment directory, and automatically rewrite links to point to local files.",
+    cmdLocalizePlugin: "Localize attachments for the current note (custom location)",
+    cmdLocalizePluginDesc:
+      "Download external image links (web URLs, base64) in the current note to a plugin-managed directory (e.g. _resources/${notename}/), and automatically rewrite links to point to local files.",
+    cmdBatchLocalize: "Localize attachments for all your notes",
+    cmdBatchLocalizeDesc:
+      "Traverse every .md file in the vault and process external links according to your configured attachment save location. Ideal for first-time setup or periodic maintenance.",
+    cmdClearImages: "Clear Unused Images in Vault (Ribbon)",
+    cmdClearImagesDesc:
+      "Scan all .md files in the vault for references and remove unreferenced orphaned image files (delete or move to trash). Only handles image types. This is also the default action of the Ribbon button.",
+    cmdClearAttachments: "Clear Unused Attachments in Vault (all types)",
+    cmdClearAttachmentsDesc:
+      "Same logic but broader scope — cleans up all non-image orphaned types as well (PDF, ZIP, MP3, MP4, etc.). Scans the entire vault.",
+    cmdClearOrphans: "Clear Unlinked Attachments in Current Note Folder (Next to Note mode)",
+    cmdClearOrphansDesc:
+      "Only available when save location is \"next to note\" and the folder template ends with ${notename}. Scans only the current note's attachment subfolder for unreferenced files.",
   },
 };
 
@@ -243,23 +284,6 @@ export default class SettingTab extends PluginSettingTab {
   constructor(app: App, plugin: LocalImagesPlugin) {
     super(app, plugin);
     this.plugin = plugin;
-  }
-
-  private toggleMediaFolderSettings(sectionEl: HTMLElement): void {
-    sectionEl.findAll(".setting-item").forEach((el: HTMLElement) => {
-      if (!el.getAttr("class")?.includes("media_folder_set")) {
-        return;
-      }
-
-      if (
-        this.plugin.settings.attachmentSaveLocation === "obsFolder" ||
-        this.plugin.settings.attachmentSaveLocation === "nextToNote"
-      ) {
-        el.hide();
-      } else {
-        el.show();
-      }
-    });
   }
 
   private updateDeleteDangerWarning(
@@ -296,8 +320,37 @@ export default class SettingTab extends PluginSettingTab {
     }
   }
 
+  private addSetting(
+    group: SettingGroup | HTMLElement,
+    configure: (setting: Setting) => void
+  ): void {
+    if (group instanceof SettingGroup) {
+      group.addSetting(configure);
+      return;
+    }
+
+    configure(new Setting(group));
+  }
+
+  private createSetting(group: SettingGroup | HTMLElement): Setting {
+    if (!(group instanceof SettingGroup)) {
+      return new Setting(group);
+    }
+
+    let createdSetting: Setting | undefined;
+    group.addSetting((setting) => {
+      createdSetting = setting;
+    });
+
+    if (!createdSetting) {
+      throw new Error("Failed to create setting inside SettingGroup.");
+    }
+
+    return createdSetting;
+  }
+
   private addNumberSetting(
-    containerEl: HTMLElement,
+    group: SettingGroup | HTMLElement,
     options: {
       name: string;
       desc: string;
@@ -309,8 +362,9 @@ export default class SettingTab extends PluginSettingTab {
       onValidChange: (value: number) => Promise<void>;
       invalidMessage: string;
     }
-  ) {
-    new Setting(containerEl)
+  ): Setting {
+    const setting = this.createSetting(group);
+    setting
       .setName(options.name)
       .setDesc(options.desc)
       .addText((text) =>
@@ -339,10 +393,116 @@ export default class SettingTab extends PluginSettingTab {
           await options.onValidChange(numberValue);
         })
       );
+
+    return setting;
   }
 
-  private createSettingGroup(containerEl: HTMLElement): HTMLElement {
-    return containerEl.createDiv({ cls: "lip-settings-group" });
+  private createSettingGroup(containerEl: HTMLElement, heading: string): SettingGroup {
+    return new SettingGroup(containerEl).setHeading(heading);
+  }
+
+  private getPreviewNoteFile(): TFile {
+    const activeFile = this.plugin.app.workspace.getActiveFile();
+    if (activeFile instanceof TFile && activeFile.extension === "md") {
+      return activeFile;
+    }
+
+    return {
+      basename: "Example Note",
+      path: "Example/Example Note.md",
+      parent: { path: "Example" },
+    } as TFile;
+  }
+
+  private async buildConfigPreview(fallbackNoteLabel: string): Promise<{
+    noteLabel: string;
+    attachmentDir: string;
+    linkExample: string;
+    imageNameExample: string;
+    attachmentNameExample: string;
+  }> {
+    const noteFile = this.getPreviewNoteFile();
+    const exampleDate = new Date(2026, 4, 28, 12, 34, 56);
+    const attachmentDir = await getMDir(this.plugin.app, noteFile, this.plugin.settings);
+    const sampleImagePath = pathJoin([
+      attachmentDir,
+      generateTimestampRandomName("png", "abcdef123456_MD5", exampleDate),
+    ]);
+    const sampleLink = await getRDir(
+      noteFile,
+      this.plugin.settings,
+      sampleImagePath,
+      "https://example.com/sample.png"
+    );
+    const useMdLinks = this.plugin.app.vault.getConfig("useMarkdownLinks");
+
+    return {
+      noteLabel: noteFile.path || fallbackNoteLabel,
+      attachmentDir,
+      linkExample: useMdLinks ? `![示例](${sampleLink[1]})` : `![[${sampleLink[0]}]]`,
+      imageNameExample: generateTimestampRandomName("png", "abcdef123456_MD5", exampleDate),
+      attachmentNameExample: generateTimestampRandomName("pdf", "abcdef123456_MD5", exampleDate),
+    };
+  }
+
+  private createConfigPreview(
+    containerEl: HTMLElement,
+    t: (key: string) => string
+  ): { wrapper: HTMLElement; refresh: () => Promise<void> } {
+    const wrapper = containerEl.createDiv({ cls: "lip-config-preview" });
+    const header = wrapper.createDiv({ cls: "lip-config-preview-header" });
+    header.createDiv({ text: t("configPreviewTitle"), cls: "lip-config-preview-title" });
+    header.createDiv({ text: t("configPreviewHint"), cls: "lip-config-preview-hint" });
+
+    const rows = wrapper.createDiv({ cls: "lip-config-preview-rows" });
+
+    const noteRow = rows.createDiv({ cls: "lip-config-preview-row" });
+    noteRow.createDiv({ text: t("previewCurrentNote"), cls: "lip-config-preview-label" });
+    const noteValue = noteRow.createDiv({ cls: "lip-config-preview-value" });
+
+    const dirRow = rows.createDiv({ cls: "lip-config-preview-row" });
+    dirRow.createDiv({ text: t("previewAttachmentDir"), cls: "lip-config-preview-label" });
+    const dirValue = dirRow.createDiv({ cls: "lip-config-preview-value" });
+
+    const linkRow = rows.createDiv({ cls: "lip-config-preview-row" });
+    linkRow.createDiv({ text: t("previewLinkExample"), cls: "lip-config-preview-label" });
+    const linkValue = linkRow.createDiv({
+      cls: "lip-config-preview-value lip-config-preview-mono",
+    });
+
+    const nameRow = rows.createDiv({ cls: "lip-config-preview-row" });
+    nameRow.createDiv({ text: t("previewNameExample"), cls: "lip-config-preview-label" });
+    const nameValue = nameRow.createDiv({
+      cls: "lip-config-preview-value lip-config-preview-mono",
+    });
+
+    const refresh = async () => {
+      const preview = await this.buildConfigPreview(t("previewFallbackNote"));
+      noteValue.setText(preview.noteLabel);
+      dirValue.setText(preview.attachmentDir);
+      linkValue.setText(preview.linkExample);
+      nameValue.setText(
+        `${t("previewImageNameExample")}: ${preview.imageNameExample} | ${t("previewAttachmentNameExample")}: ${preview.attachmentNameExample}`
+      );
+    };
+
+    return { wrapper, refresh };
+  }
+
+  private createCommandDetails(
+    containerEl: HTMLElement,
+    summary: string,
+    commands: Array<{ name: string; desc: string }>
+  ): void {
+    const detailsEl = containerEl.createEl("details", { cls: "lip-command-details" });
+    detailsEl.createEl("summary", { text: summary });
+    const listEl = detailsEl.createDiv({ cls: "lip-command-details-list" });
+
+    for (const command of commands) {
+      const itemEl = listEl.createDiv({ cls: "lip-command-details-item" });
+      itemEl.createDiv({ text: command.name, cls: "lip-command-details-name" });
+      itemEl.createDiv({ text: command.desc, cls: "lip-command-details-desc" });
+    }
   }
 
   display(): void {
@@ -393,12 +553,29 @@ export default class SettingTab extends PluginSettingTab {
 
     // ===================== 图片本地化 =====================
     const localizeEl = sectionEls.get("localize")!;
+    const configPreview = this.createConfigPreview(localizeEl, t);
+    void configPreview.refresh();
+
+    const updateAutoProcessSettings = () => {
+      const shouldDisable = !this.plugin.settings.autoProcess;
+      autoProcessIntervalSetting.setDisabled(shouldDisable);
+      processNewMarkdownSetting.setDisabled(shouldDisable);
+      processNewAttachmentsSetting.setDisabled(shouldDisable);
+    };
+
+    const updateAttachmentFolderSettings = () => {
+      const shouldHide =
+        this.plugin.settings.attachmentSaveLocation === "obsFolder" ||
+        this.plugin.settings.attachmentSaveLocation === "nextToNoteS";
+      localizeEl
+        .querySelectorAll<HTMLElement>('[data-lip-conditional="attachment-folder"]')
+        .forEach((el) => el.toggleClass("lip-conditional-hidden", shouldHide));
+    };
 
     // ── 自动触发 ──
-    localizeEl.createEl("h3", { text: t("subgroupAutoTriggerTitle"), cls: "lip-settings-subgroup-title" });
-    const triggerGroupEl = this.createSettingGroup(localizeEl);
+    const triggerGroupEl = this.createSettingGroup(localizeEl, t("subgroupAutoTriggerTitle"));
 
-    new Setting(triggerGroupEl)
+    const autoProcessSetting = this.createSetting(triggerGroupEl)
       .setName(t("autoProcess"))
       .setDesc(t("autoProcessDesc"))
       .addToggle((toggle) =>
@@ -406,10 +583,11 @@ export default class SettingTab extends PluginSettingTab {
           this.plugin.settings.autoProcess = value;
           await this.plugin.saveSettings();
           this.plugin.setupQueueInterval();
+          updateAutoProcessSettings();
         })
       );
 
-    this.addNumberSetting(triggerGroupEl, {
+    const autoProcessIntervalSetting = this.addNumberSetting(triggerGroupEl, {
       name: t("autoProcessInterval"),
       desc: t("autoProcessIntervalDesc"),
       value: this.plugin.settings.autoProcessInterval,
@@ -424,7 +602,7 @@ export default class SettingTab extends PluginSettingTab {
       invalidMessage: t("autoProcessIntervalInvalid"),
     });
 
-    new Setting(triggerGroupEl)
+    const processNewMarkdownSetting = this.createSetting(triggerGroupEl)
       .setName(t("processNewMarkdown"))
       .setDesc(t("processNewMarkdownDesc"))
       .addToggle((toggle) =>
@@ -435,10 +613,9 @@ export default class SettingTab extends PluginSettingTab {
       );
 
     // ── 存储命名 ──
-    localizeEl.createEl("h3", { text: t("subgroupStorageNamingTitle"), cls: "lip-settings-subgroup-title" });
-    const storageNamingGroupEl = this.createSettingGroup(localizeEl);
+    const storageNamingGroupEl = this.createSettingGroup(localizeEl, t("subgroupStorageNamingTitle"));
 
-    new Setting(storageNamingGroupEl)
+    const processNewAttachmentsSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("processNewAttachments"))
       .setDesc(t("processNewAttachmentsDesc"))
       .addToggle((toggle) =>
@@ -448,7 +625,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(storageNamingGroupEl)
+    const attachmentSaveLocationSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("attachmentSaveLocation"))
       .setDesc(t("attachmentSaveLocationDesc"))
       .addDropdown((dropdown) =>
@@ -460,11 +637,12 @@ export default class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.attachmentSaveLocation = value;
             await this.plugin.saveSettings();
-            this.toggleMediaFolderSettings(localizeEl);
+            updateAttachmentFolderSettings();
+            void configPreview.refresh();
           })
       );
 
-    new Setting(storageNamingGroupEl)
+    const mediaFolderPathSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("mediaFolderPath"))
       .setDesc(t("mediaFolderPathDesc"))
       .setClass("media_folder_set")
@@ -476,10 +654,12 @@ export default class SettingTab extends PluginSettingTab {
           }
           this.plugin.settings.mediaFolderPath = value;
           await this.plugin.saveSettings();
+          void configPreview.refresh();
         })
       );
+    mediaFolderPathSetting.settingEl.dataset.lipConditional = "attachment-folder";
 
-    new Setting(storageNamingGroupEl)
+    const syncMediaFolderSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("syncMediaFolder"))
       .setDesc(t("syncMediaFolderDesc"))
       .setClass("media_folder_set")
@@ -487,20 +667,23 @@ export default class SettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.syncMediaFolder).onChange(async (value) => {
           this.plugin.settings.syncMediaFolder = value;
           await this.plugin.saveSettings();
+          void configPreview.refresh();
         })
       );
+    syncMediaFolderSetting.settingEl.dataset.lipConditional = "attachment-folder";
 
-    new Setting(storageNamingGroupEl)
+    const useTimestampNamingSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("useTimestampNaming"))
       .setDesc(t("useTimestampNamingDesc"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.useTimestampNaming).onChange(async (value) => {
           this.plugin.settings.useTimestampNaming = value;
           await this.plugin.saveSettings();
+          void configPreview.refresh();
         })
       );
 
-    new Setting(storageNamingGroupEl)
+    const useTimestampNamingForAttachmentsSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("useTimestampNamingForAttachments"))
       .setDesc(t("useTimestampNamingForAttachmentsDesc"))
       .addToggle((toggle) =>
@@ -509,30 +692,33 @@ export default class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.useTimestampNamingForAttachments = value;
             await this.plugin.saveSettings();
+            void configPreview.refresh();
           })
       );
 
-    new Setting(storageNamingGroupEl)
+    const appendOriginalNameSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("appendOriginalName"))
       .setDesc(t("appendOriginalNameDesc"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.appendOriginalName).onChange(async (value) => {
           this.plugin.settings.appendOriginalName = value;
           await this.plugin.saveSettings();
+          void configPreview.refresh();
         })
       );
 
-    new Setting(storageNamingGroupEl)
+    const preserveCaptionsSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("preserveCaptions"))
       .setDesc(t("preserveCaptionsDesc"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.preserveCaptions).onChange(async (value) => {
           this.plugin.settings.preserveCaptions = value;
           await this.plugin.saveSettings();
+          void configPreview.refresh();
         })
       );
 
-    new Setting(storageNamingGroupEl)
+    const linkPathFormatSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("linkPathFormat"))
       .setDesc(t("linkPathFormatDesc"))
       .addDropdown((dropdown) =>
@@ -544,24 +730,25 @@ export default class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.linkPathFormat = value;
             await this.plugin.saveSettings();
+            void configPreview.refresh();
           })
       );
 
-    new Setting(storageNamingGroupEl)
+    const skipObsidianFolderCreationSetting = this.createSetting(storageNamingGroupEl)
       .setName(t("skipObsidianFolderCreation"))
       .setDesc(t("skipObsidianFolderCreationDesc"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.skipObsidianFolderCreation).onChange(async (value) => {
           this.plugin.settings.skipObsidianFolderCreation = value;
           await this.plugin.saveSettings();
+          void configPreview.refresh();
         })
       );
 
     // ── 下载行为 ──
-    localizeEl.createEl("h3", { text: t("subgroupDownloadTitle"), cls: "lip-settings-subgroup-title" });
-    const downloadGroupEl = this.createSettingGroup(localizeEl);
+    const downloadGroupEl = this.createSettingGroup(localizeEl, t("subgroupDownloadTitle"));
 
-    new Setting(downloadGroupEl)
+    this.createSetting(downloadGroupEl)
       .setName(t("downloadRetryCount"))
       .setDesc(t("downloadRetryCountDesc"))
       .addText((text) =>
@@ -578,7 +765,7 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(downloadGroupEl)
+    this.createSetting(downloadGroupEl)
       .setName(t("downloadUnknownTypes"))
       .setDesc(t("downloadUnknownTypesDesc"))
       .addToggle((toggle) =>
@@ -588,7 +775,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(downloadGroupEl)
+    this.createSetting(downloadGroupEl)
       .setName(t("minFileSizeKB"))
       .setDesc(t("minFileSizeKBDesc"))
       .addText((text) =>
@@ -605,7 +792,7 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(downloadGroupEl)
+    this.createSetting(downloadGroupEl)
       .setName(t("excludedExtensions"))
       .setDesc(t("excludedExtensionsDesc"))
       .addText((text) =>
@@ -616,10 +803,9 @@ export default class SettingTab extends PluginSettingTab {
       );
 
     // ── 图片压缩 ──
-    localizeEl.createEl("h3", { text: t("subgroupCompressionTitle"), cls: "lip-settings-subgroup-title" });
-    const compressionGroupEl = this.createSettingGroup(localizeEl);
+    const compressionGroupEl = this.createSettingGroup(localizeEl, t("subgroupCompressionTitle"));
 
-    new Setting(compressionGroupEl)
+    this.createSetting(compressionGroupEl)
       .setName(t("compressImage"))
       .setDesc(t("compressImageDesc"))
       .addToggle((toggle) =>
@@ -630,11 +816,11 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    const compressionOptionsEl = compressionGroupEl.createDiv({
+    const compressionOptionsEl = localizeEl.createDiv({
       cls: "lip-settings-dependent",
     });
 
-    new Setting(compressionOptionsEl)
+    this.createSetting(compressionOptionsEl)
       .setName(t("compressionFormat"))
       .setDesc(t("compressionFormatDesc"))
       .addDropdown((dropdown) => {
@@ -648,7 +834,7 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    new Setting(compressionOptionsEl)
+    this.createSetting(compressionOptionsEl)
       .setName(t("compressionQuality"))
       .setDesc(t("compressionQualityDesc"))
       .addText((text) =>
@@ -669,12 +855,22 @@ export default class SettingTab extends PluginSettingTab {
 
     // ── 图片预览 ──
     const previewEl = sectionEls.get("preview")!;
+    const globalGroupEl = this.createSettingGroup(previewEl, t("subgroupGlobalTitle"));
 
-    previewEl.createEl("h3", { text: t("subgroupPreviewTitle"), cls: "lip-settings-subgroup-title" });
-    const previewGroupEl = this.createSettingGroup(previewEl);
+    this.createSetting(globalGroupEl)
+      .setName(t("showNotifications"))
+      .setDesc(t("showNotificationsDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showNotifications).onChange(async (value) => {
+          this.plugin.settings.showNotifications = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    const previewGroupEl = this.createSettingGroup(previewEl, t("subgroupPreviewTitle"));
 
     if (Platform.isDesktop) {
-      new Setting(previewGroupEl)
+      this.createSetting(previewGroupEl)
         .setName(t("clickPreviewEnabled"))
         .setDesc(t("clickPreviewEnabledDesc"))
         .addToggle((toggle) =>
@@ -684,7 +880,7 @@ export default class SettingTab extends PluginSettingTab {
           })
         );
 
-      new Setting(previewGroupEl)
+      this.createSetting(previewGroupEl)
         .setName(t("previewAdaptiveRatio"))
         .setDesc(t("previewAdaptiveRatioDesc"))
         .addSlider((slider) => {
@@ -698,39 +894,14 @@ export default class SettingTab extends PluginSettingTab {
               await this.plugin.saveSettings();
             });
         });
-
-      new Setting(previewGroupEl)
-        .setName(t("dragResizeEnabled"))
-        .setDesc(t("dragResizeEnabledDesc"))
-        .addToggle((toggle) =>
-          toggle.setValue(this.plugin.settings.dragResizeEnabled).onChange(async (value) => {
-            this.plugin.settings.dragResizeEnabled = value;
-            await this.plugin.saveSettings();
-          })
-        );
-
-      this.addNumberSetting(previewGroupEl, {
-        name: t("dragResizeStep"),
-        desc: t("dragResizeStepDesc"),
-        value: this.plugin.settings.dragResizeStep,
-        min: 0,
-        integer: true,
-        emptyAs: 0,
-        onValidChange: async (value) => {
-          this.plugin.settings.dragResizeStep = value;
-          await this.plugin.saveSettings();
-        },
-        invalidMessage: t("dragResizeStepInvalid"),
-      });
     } else {
-      new Setting(previewGroupEl)
+      this.createSetting(previewGroupEl)
         .setDesc(t("previewMobileDesc"));
     }
 
-    previewEl.createEl("h3", { text: t("subgroupCleanupTitle"), cls: "lip-settings-subgroup-title" });
-    const cleanupGroupEl = this.createSettingGroup(previewEl);
+    const cleanupGroupEl = this.createSettingGroup(previewEl, t("subgroupCleanupTitle"));
 
-    new Setting(cleanupGroupEl)
+    this.createSetting(cleanupGroupEl)
       .setName(t("showCleanupRibbon"))
       .setDesc(t("showCleanupRibbonDesc"))
       .addToggle((toggle) =>
@@ -741,7 +912,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(cleanupGroupEl)
+    this.createSetting(cleanupGroupEl)
       .setName(t("deleteDestination"))
       .setDesc(t("deleteDestinationDesc"))
       .addDropdown((dropdown) => {
@@ -757,12 +928,12 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    const deleteWarningEl = cleanupGroupEl.createDiv({
+    const deleteWarningEl = previewEl.createDiv({
       cls: "lip-settings-danger-warning",
     });
     this.updateDeleteDangerWarning(deleteWarningEl, this.plugin.settings.deleteDestination, t);
 
-    new Setting(cleanupGroupEl)
+    this.createSetting(cleanupGroupEl)
       .setName(t("showOperationLogs"))
       .setDesc(t("showOperationLogsDesc"))
       .addToggle((toggle) =>
@@ -772,7 +943,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(cleanupGroupEl)
+    this.createSetting(cleanupGroupEl)
       .setName(t("excludedFolders"))
       .setDesc(t("excludedFoldersDesc"))
       .addTextArea((text) => {
@@ -807,7 +978,7 @@ export default class SettingTab extends PluginSettingTab {
         text.inputEl.style.width = "100%";
       });
 
-    new Setting(cleanupGroupEl)
+    this.createSetting(cleanupGroupEl)
       .setName(t("excludeSubfolders"))
       .setDesc(t("excludeSubfoldersDesc"))
       .addToggle((toggle) =>
@@ -817,40 +988,17 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    // ── 界面与全局 ──
-    previewEl.createEl("h3", { text: t("subgroupUIGlobalTitle"), cls: "lip-settings-subgroup-title" });
-    const uiGlobalGroupEl = this.createSettingGroup(previewEl);
+    // ── 命令面板 ──
+    this.createCommandDetails(previewEl, t("commandPaletteSummary"), [
+      { name: t("cmdLocalizeObsidian"), desc: t("cmdLocalizeObsidianDesc") },
+      { name: t("cmdLocalizePlugin"), desc: t("cmdLocalizePluginDesc") },
+      { name: t("cmdBatchLocalize"), desc: t("cmdBatchLocalizeDesc") },
+      { name: t("cmdClearImages"), desc: t("cmdClearImagesDesc") },
+      { name: t("cmdClearAttachments"), desc: t("cmdClearAttachmentsDesc") },
+      { name: t("cmdClearOrphans"), desc: t("cmdClearOrphansDesc") },
+    ]);
 
-    new Setting(uiGlobalGroupEl)
-      .setName(t("showNotifications"))
-      .setDesc(t("showNotificationsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.showNotifications).onChange(async (value) => {
-          this.plugin.settings.showNotifications = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(uiGlobalGroupEl)
-      .setName(t("showBatchCommands"))
-      .setDesc(t("showBatchCommandsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.showBatchCommands).onChange(async (value) => {
-          this.plugin.settings.showBatchCommands = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(uiGlobalGroupEl)
-      .setName(t("debugMode"))
-      .setDesc(t("debugModeDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(isDebugMode()).onChange(async (value) => {
-          setDebugMode(value);
-          await this.plugin.saveSettings();
-        })
-      );
-
-    this.toggleMediaFolderSettings(localizeEl);
+    updateAutoProcessSettings();
+    updateAttachmentFolderSettings();
   }
 }

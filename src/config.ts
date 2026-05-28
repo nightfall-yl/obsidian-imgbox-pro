@@ -2,19 +2,6 @@ export const APP_NAME = "ImgBox Pro";
 export const APP_VERSION = "2026.3.1";
 export const APP_TITLE = `${APP_NAME}  ${APP_VERSION}`;
 
-// Debug mode — replaces the old VERBOSE module variable and previewDebug setting
-let _debugMode = false;
-
-function setDebugMode(value: boolean = false) {
-  _debugMode = value;
-}
-
-function isDebugMode(): boolean {
-  return _debugMode;
-}
-
-export { isDebugMode, setDebugMode };
-
 export const SUPPORTED_OS = { win: "win32", unix: "linux,darwin,freebsd,openbsd" };
 
 export const USER_AGENT =
@@ -55,7 +42,6 @@ export const FORBIDDEN_SYMBOLS_FILENAME_PATTERN = /\s+/g;
 export interface ISettings {
   // ---- 通用 ----
   showNotifications: boolean;
-  showBatchCommands: boolean;
   showCleanupRibbon: boolean;
   autoProcess: boolean;
   autoProcessInterval: number;
@@ -66,7 +52,6 @@ export interface ISettings {
   // ---- 开发者选项 ----
   includePattern: string;
   includePatternRegex: string;
-  debugMode: boolean;
 
   // ---- 图片本地化 ----
   downloadRetryCount: number;
@@ -94,14 +79,11 @@ export interface ISettings {
   // ---- 图片预览 ----
   clickPreviewEnabled: boolean;
   previewAdaptiveRatio: number;
-  dragResizeEnabled: boolean;
-  dragResizeStep: number;
 }
 
 export const DEFAULT_SETTINGS: ISettings = {
   // 通用
   showNotifications: true,
-  showBatchCommands: true,
   showCleanupRibbon: true,
   autoProcess: true,
   autoProcessInterval: 3,
@@ -112,7 +94,6 @@ export const DEFAULT_SETTINGS: ISettings = {
   // 开发者选项
   includePattern: "md|canvas",
   includePatternRegex: "(?<md>.*\\.md)|(?<canvas>.*\\.canvas)",
-  debugMode: false,
 
   // 图片本地化
   downloadRetryCount: 2,
@@ -140,6 +121,4 @@ export const DEFAULT_SETTINGS: ISettings = {
   // 图片预览
   clickPreviewEnabled: false,
   previewAdaptiveRatio: 0.9,
-  dragResizeEnabled: true,
-  dragResizeStep: 0,
 };

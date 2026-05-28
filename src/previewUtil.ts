@@ -1,6 +1,6 @@
 import { App, Modal, Notice, Setting, TFile, TFolder, MarkdownView } from "obsidian";
 import { EditorView } from "@codemirror/view";
-import { ISettings, isDebugMode, setDebugMode } from "./config";
+import { ISettings } from "./config";
 
 export interface PreviewHost {
   app: App;
@@ -9,16 +9,6 @@ export interface PreviewHost {
 }
 
 const SUCCESS_NOTICE_TIMEOUT = 1800;
-
-export const print = (message?: any, ...optionalParams: any[]) => {
-  if (isDebugMode()) {
-    console.log(message, ...optionalParams);
-  }
-};
-
-export function setDebug(value: boolean) {
-  setDebugMode(value);
-}
 
 export const checkReferenceInfo = (
   plugin: PreviewHost,

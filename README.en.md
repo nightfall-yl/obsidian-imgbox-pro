@@ -9,7 +9,7 @@
 - Image localization: download web images, handle pasted / dragged media, save base64 images
 - Attachment organization: multiple save locations, link styles, `YYYYMMDD-HHmmss-md5-first-6` naming, deduplication (images and non-image attachments can be controlled separately)
 - Attachment cleanup: unused images, unused attachments, and unlinked attachments in the current note folder
-- Image interaction (desktop): context menu, click-to-preview, drag-to-resize, navigator highlight
+- Image interaction (desktop): context menu, click-to-preview, navigator highlight
 - Image interaction (mobile): uses the built-in Obsidian image viewer
 - Source-note jump: image navigator or image-tab context menu supports `Go to Source Note`
 - Top-navigation settings UI: `Localize / Image Management`
@@ -23,21 +23,22 @@ Command palette entries are intentionally kept in English.
 
 Core commands:
 
-- `Localize attachments for the current note (plugin folder)`
-- `Localize attachments for the current note (Obsidian folder)`
+- `Localize attachments for the current note (custom location)`
+- `Localize attachments for the current note (Obsidian location)`
 - `Clear Unused Images in Vault`
 - `Clear Unused Attachments in Vault`
 
 Optional commands:
 
-- Batch commands (visibility can be controlled in settings)
-  - `Localize attachments for all your notes (plugin folder)`
+- Batch commands (always shown)
+  - `Localize attachments for all your notes (custom location)`
   - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)`
 
 Notes:
 
 - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` is only available in "next to note" mode, and the folder pattern must end with `${notename}`
 - the image navigator or image-tab context menu provides: `Go to Source Note`
+- Command palette entries are always shown; there is no visibility toggle.
 
 ## Ribbon
 
@@ -89,7 +90,7 @@ Image Compression:
 
 Image Preview:
 
-- Desktop: click-to-preview, preview ratio, drag-to-resize, resize step
+- Desktop: click-to-preview, preview ratio
 - Mobile: uses the built-in Obsidian image viewer. No configuration needed.
 - Image navigator or image-tab context menu supports `Go to Source Note`
 
@@ -104,8 +105,7 @@ Image Cleanup:
 UI & Global:
 
 - show notifications
-- show batch commands
-- debug mode
+- Command palette entries are always shown; there is no visibility toggle.
 
 ## Supported Image Formats
 
@@ -138,7 +138,7 @@ Notes:
 - plugin name: `ImgBox Pro`
 - plugin id: `obsidian-imgbox-pro`
 - version: `26.5.6`
-- minimum Obsidian version: `1.0.3`
+- minimum Obsidian version: `1.11.0`
 - platform support: desktop + mobile
 
 ## Usage Notes

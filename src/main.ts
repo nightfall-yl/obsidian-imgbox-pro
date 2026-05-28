@@ -21,6 +21,7 @@ import {
   trimAny,
   logError,
   showBalloon,
+  showStatusBalloon,
   displayError,
   encObsURI,
   pathJoin,
@@ -40,12 +41,11 @@ import {
   MD_SEARCH_PATTERN,
   NOTICE_TIMEOUT,
   TIMEOUT_LIKE_INFINITY,
-  setDebugMode,
 } from "./config";
 
 import { UniqueQueue } from "./uniqueQueue";
 import { ModalW1 } from "./modal";
-import { ClearUnusedLogsModal } from "./clearUnusedModal";
+import { ClearUnusedLogsModal, ClearUnusedPreviewModal } from "./clearUnusedModal";
 import { deleteFilesInTheList, getFormattedDate, getUnusedAttachments } from "./clearUnusedUtils";
 import { getAllLinkMatchesInFile } from "./clearUnusedLinkDetector";
 import { PreviewFeature } from "./previewFeature";
@@ -222,16 +222,16 @@ export default class LocalImagesPlugin extends Plugin {
     this.addCommand({
       id: "download-images",
       name: isChineseDisplayLanguage()
-        ? "本地化当前笔记附件（插件文件夹）"
-        : "Localize attachments for the current note (plugin folder)",
+        ? "本地化当前笔记附件（自定义位置）"
+        : "Localize attachments for the current note (custom location)",
       callback: this.processActivePage(false),
     });
 
     this.addCommand({
       id: "download-images-def",
       name: isChineseDisplayLanguage()
-        ? "本地化当前笔记附件（Obsidian 文件夹）"
-        : "Localize attachments for the current note (Obsidian folder)",
+        ? "本地化当前笔记附件（Obsidian 位置）"
+        : "Localize attachments for the current note (Obsidian location)",
       callback: this.processActivePage(true),
     });
 
@@ -253,25 +253,23 @@ export default class LocalImagesPlugin extends Plugin {
 
     this.refreshRibbonIcons();
 
-    if (this.settings.showBatchCommands) {
-      this.addCommand({
-        id: "download-images-all",
-        name: isChineseDisplayLanguage()
-          ? "批量本地化所有笔记的附件（插件文件夹）"
-          : "Localize attachments for all your notes (plugin folder)",
-        callback: this.openProcessAllModal,
-      });
+    this.addCommand({
+      id: "download-images-all",
+      name: isChineseDisplayLanguage()
+        ? "批量本地化所有笔记的附件（自定义位置）"
+        : "Localize attachments for all your notes (custom location)",
+      callback: this.openProcessAllModal,
+    });
 
-      this.addCommand({
-        id: "clear-unlinked-attachments-current-note-folder",
-        name: isChineseDisplayLanguage()
-          ? "清理当前笔记文件夹中的孤立附件（笔记旁模式）"
-          : "Clear Unlinked Attachments in Current Note Folder (Next to Note mode)",
-        callback: () => {
-          this.removeOrphans("plugin")();
-        },
-      });
-    }
+    this.addCommand({
+      id: "clear-unlinked-attachments-current-note-folder",
+      name: isChineseDisplayLanguage()
+        ? "清理当前笔记文件夹中的孤立附件（笔记旁模式）"
+        : "Clear Unlinked Attachments in Current Note Folder (Next to Note mode)",
+      callback: () => {
+        this.removeOrphans("plugin")();
+      },
+    });
 
     this.registerEvent(
       this.app.vault.on("create", async (file: TFile) => {
@@ -310,8 +308,10 @@ export default class LocalImagesPlugin extends Plugin {
           try {
             if (this.app.vault.getAbstractFileByPath(rootdir) instanceof TFolder) {
               this.app.vault.trash(this.app.vault.getAbstractFileByPath(rootdir), useSysTrash);
-              showBalloon(
-                "Attachment folder " + rootdir + " was moved to trash can.",
+              showStatusBalloon(
+                isChineseDisplayLanguage()
+                  ? `附件文件夹 ${rootdir} 已移入回收站。`
+                  : "Attachment folder " + rootdir + " was moved to trash can.",
                 this.settings.showNotifications
               );
             }
@@ -352,13 +352,20 @@ export default class LocalImagesPlugin extends Plugin {
             if (this.app.vault.getAbstractFileByPath(oldRootdir_) instanceof TFolder) {
               await this.ensureFolderExists(pathDirname(newRootDir_));
               await this.app.vault.adapter.rename(oldRootdir_, newRootDir_);
-              showBalloon(
-                "Attachment folder was renamed to " + newRootDir_,
+              showStatusBalloon(
+                isChineseDisplayLanguage()
+                  ? `附件文件夹已重命名为 ${newRootDir_}`
+                  : "Attachment folder was renamed to " + newRootDir_,
                 this.settings.showNotifications
               );
             }
           } catch (e) {
-            showBalloon("Cannot move attachment folder: \r\n" + e, this.settings.showNotifications);
+            showBalloon(
+              isChineseDisplayLanguage()
+                ? "无法移动附件文件夹：\r\n" + e
+                : "Cannot move attachment folder: \r\n" + e,
+              true
+            );
             logError(e);
             return;
           }
@@ -441,49 +448,83 @@ export default class LocalImagesPlugin extends Plugin {
       return;
     }
 
-    let logs = isChinese
-      ? `[+] ${getFormattedDate()}：开始清理。</br>`
-      : `[+] ${getFormattedDate()}: Clearing started.</br>`;
-    const { deletedImages, textToView } = await deleteFilesInTheList(
+    const modalTitle =
+      type === "image"
+        ? isChinese
+          ? "清理未使用图片 - 预览"
+          : "Clear Unused Images - Preview"
+        : isChinese
+        ? "清理未使用附件 - 预览"
+        : "Clear Unused Attachments - Preview";
+    const deleteDestinationLabel =
+      this.settings.deleteDestination === "permanent"
+        ? isChinese
+          ? "当前删除方式：永久删除"
+          : "Current delete mode: permanent deletion"
+        : this.settings.deleteDestination === ".trash"
+        ? isChinese
+          ? "当前删除方式：Obsidian 回收站"
+          : "Current delete mode: Obsidian Trash"
+        : isChinese
+        ? "当前删除方式：系统回收站"
+        : "Current delete mode: System Trash";
+    const previewDescription = isChinese
+      ? `${deleteDestinationLabel}。确认后将继续删除这些未使用文件。`
+      : `${deleteDestinationLabel}. Confirm to delete these unused files.`;
+
+    const previewModal = new ClearUnusedPreviewModal(
+      modalTitle,
+      previewDescription,
       unusedAttachments,
-      this.settings,
+      async () => {
+        let logs = isChinese
+          ? `[+] ${getFormattedDate()}：开始清理。</br>`
+          : `[+] ${getFormattedDate()}: Clearing started.</br>`;
+        const { deletedImages, textToView } = await deleteFilesInTheList(
+          unusedAttachments,
+          this.settings,
+          this.app
+        );
+        logs += textToView;
+        logs += isChinese
+          ? `[+] 共删除 ${deletedImages.toString()} 个${targetName}。</br>`
+          : `[+] ${deletedImages.toString()} ${targetName} in total deleted.</br>`;
+        logs += isChinese
+          ? `[+] ${getFormattedDate()}：清理完成。`
+          : `[+] ${getFormattedDate()}: Clearing completed.`;
+
+        if (deletedImages === 0) {
+          new Notice(
+            isChinese
+              ? "未删除任何文件。所有未使用文件都位于排除文件夹中。"
+              : "No files were deleted. All unused files are inside excluded folders."
+          );
+          return;
+        }
+
+        if (this.settings.showOperationLogs) {
+          const logModalTitle =
+            type === "image"
+              ? isChinese
+                ? "清理未使用图片 - 日志"
+                : "Clear Unused Images - Logs"
+              : isChinese
+              ? "清理未使用附件 - 日志"
+              : "Clear Unused Attachments - Logs";
+          const modal = new ClearUnusedLogsModal(logModalTitle, logs, this.app);
+          modal.open();
+        } else {
+          new Notice(
+            isChinese
+              ? `已删除 ${deletedImages} 个未使用${targetName}。`
+              : `Deleted ${deletedImages} unused ${targetName}.`
+          );
+        }
+      },
       this.app
     );
-    logs += textToView;
-    logs += isChinese
-      ? `[+] 共删除 ${deletedImages.toString()} 个${targetName}。</br>`
-      : `[+] ${deletedImages.toString()} ${targetName} in total deleted.</br>`;
-    logs += isChinese
-      ? `[+] ${getFormattedDate()}：清理完成。`
-      : `[+] ${getFormattedDate()}: Clearing completed.`;
 
-    if (deletedImages === 0) {
-      new Notice(
-        isChinese
-          ? "未删除任何文件。所有未使用文件都位于排除文件夹中。"
-          : "No files were deleted. All unused files are inside excluded folders."
-      );
-      return;
-    }
-
-    if (this.settings.showOperationLogs) {
-      const modalTitle =
-        type === "image"
-          ? isChinese
-            ? "清理未使用图片 - 日志"
-            : "Clear Unused Images - Logs"
-          : isChinese
-          ? "清理未使用附件 - 日志"
-          : "Clear Unused Attachments - Logs";
-      const modal = new ClearUnusedLogsModal(modalTitle, logs, this.app);
-      modal.open();
-    } else {
-      new Notice(
-        isChinese
-          ? `已删除 ${deletedImages} 个未使用${targetName}。`
-          : `Deleted ${deletedImages} unused ${targetName}.`
-      );
-    }
+    previewModal.open();
   };
 
   setupQueueInterval() {
@@ -506,7 +547,10 @@ export default class LocalImagesPlugin extends Plugin {
       const noteFile = this.app.workspace.getActiveViewOfType(MarkdownView)?.file ?? null;
       return noteFile;
     } catch (e) {
-      showBalloon("Cannot get current note! ", this.settings.showNotifications);
+      showBalloon(
+        isChineseDisplayLanguage() ? "无法获取当前笔记！" : "Cannot get current note! ",
+        true
+      );
     }
     return null;
   }
@@ -539,8 +583,10 @@ export default class LocalImagesPlugin extends Plugin {
         this.newfCreatedByDownloader.push(element);
       });
 
-      showBalloon(
-        `Attachments for "${file.path}" were processed.`,
+      showStatusBalloon(
+        isChineseDisplayLanguage()
+          ? `「${file.path}」的附件已处理完成。`
+          : `Attachments for "${file.path}" were processed.`,
         this.settings.showNotifications
       );
     } else if (content != fixedContent[0] && fixedContent[1] === true) {
@@ -552,15 +598,19 @@ export default class LocalImagesPlugin extends Plugin {
       });
 
       showBalloon(
-        `WARNING!\r\nAttachments for "${file.path}" were processed, but some attachments were not downloaded/replaced...`,
-        this.settings.showNotifications
+        isChineseDisplayLanguage()
+          ? `警告！\r\n「${file.path}」的附件已处理，但部分附件未能下载或替换...`
+          : `WARNING!\r\nAttachments for "${file.path}" were processed, but some attachments were not downloaded/replaced...`,
+        true
       );
     } else {
       if (options.notifyWhenUnchanged ?? true) {
-        showBalloon(
-          `Page "${file.path}" has been processed, but nothing was changed.`,
-          this.settings.showNotifications
-        );
+        showStatusBalloon(
+          isChineseDisplayLanguage()
+            ? `「${file.path}」已处理完毕，但无任何变更。`
+            : `Page "${file.path}" has been processed, but nothing was changed.`,
+            this.settings.showNotifications
+          );
       }
     }
   }
@@ -575,7 +625,7 @@ export default class LocalImagesPlugin extends Plugin {
       } catch (e) {
         showBalloon(
           `Please select a note or click inside selected note in canvas.`,
-          this.settings.showNotifications
+          true
         );
         return;
       }
@@ -586,9 +636,12 @@ export default class LocalImagesPlugin extends Plugin {
 
     const pagesCount = files.length;
 
-    const notice = this.settings.showNotifications
+    const notice = true
       ? new Notice(
-          APP_NAME + `\nStart processing. Total ${pagesCount} pages. `,
+          APP_NAME +
+            (isChineseDisplayLanguage()
+              ? `\n开始处理。共 ${pagesCount} 页。`
+              : `\nStart processing. Total ${pagesCount} pages. `),
           TIMEOUT_LIKE_INFINITY
         )
       : null;
@@ -597,14 +650,22 @@ export default class LocalImagesPlugin extends Plugin {
       if (this.ExemplaryOfMD(file.path)) {
         if (notice) {
           (notice as any).setMessage(
-            APP_NAME + `\nProcessing \n"${file.path}" \nPage ${index} of ${pagesCount}`
+            APP_NAME +
+              (isChineseDisplayLanguage()
+                ? `\n正在处理\n"${file.path}"\n第 ${index + 1}/${pagesCount} 页`
+                : `\nProcessing \n"${file.path}" \nPage ${index} of ${pagesCount}`)
           );
         }
         await this.processPage(file);
       }
     }
     if (notice) {
-      (notice as any).setMessage(APP_NAME + `\n${pagesCount} pages were processed.`);
+      (notice as any).setMessage(
+        APP_NAME +
+          (isChineseDisplayLanguage()
+            ? `\n${pagesCount} 页处理完毕。`
+            : `\n${pagesCount} pages were processed.`)
+      );
 
       setTimeout(() => {
         notice.hide();
@@ -653,8 +714,10 @@ export default class LocalImagesPlugin extends Plugin {
             for (const reg_p of MD_SEARCH_PATTERN) {
               if (reg_p.test(cont)) {
                 logError("content: " + cont);
-                showBalloon(
-                  "Media links were found, processing...",
+                showStatusBalloon(
+                  isChineseDisplayLanguage()
+                    ? "检测到媒体链接，正在处理..."
+                    : "Media links were found, processing...",
                   this.settings.showNotifications
                 );
 
@@ -669,8 +732,10 @@ export default class LocalImagesPlugin extends Plugin {
       }
     } catch (e) {
       showBalloon(
-        `Please select a note or click inside selected note in canvas.`,
-        this.settings.showNotifications
+        isChineseDisplayLanguage()
+          ? "请选择一篇笔记，或在画布中的笔记内点击。"
+          : `Please select a note or click inside selected note in canvas.`,
+        true
       );
       return;
     }
@@ -695,7 +760,7 @@ export default class LocalImagesPlugin extends Plugin {
             isChineseDisplayLanguage()
               ? `此命令需要启用\u201C保存在笔记旁边的指定文件夹\u201D，并且路径末尾使用\u201C\${notename}\u201D模板。\n请先修改设置！\r\n`
               : "This command requires the settings 'Next to note in the folder specified below' and pattern '${notename}' at the end to be enabled.\nPlease, change settings first!\r\n",
-            this.settings.showNotifications
+            true
           );
           return;
         }
@@ -707,7 +772,7 @@ export default class LocalImagesPlugin extends Plugin {
               isChineseDisplayLanguage()
                 ? "请选择一篇笔记，或在画布中的笔记内点击后重试！"
                 : "Please, select a note or click inside a note in canvas!",
-              this.settings.showNotifications
+              true
             );
             return;
           }
@@ -721,7 +786,7 @@ export default class LocalImagesPlugin extends Plugin {
               isChineseDisplayLanguage()
                 ? `附件文件夹 ${oldRootdir} 不存在！`
                 : "The attachment folder " + oldRootdir + " does not exist!",
-              this.settings.showNotifications
+              true
             );
             return;
           }
@@ -738,18 +803,18 @@ export default class LocalImagesPlugin extends Plugin {
 
           if (orphanedAttachments.length > 0) {
             const mod = new ModalW1(this.app);
-            mod.messg = isChineseDisplayLanguage()
-              ? `确认从"${oldRootdir}"清理 ${orphanedAttachments.length} 个未关联附件？\r\n\r\n      `
+            mod.messg = (isChineseDisplayLanguage()
+              ? `确认清理 ${orphanedAttachments.length} 个未关联附件，来自 '${oldRootdir}'\r\n\r\n      `
               : "Confirm clearing " +
                 orphanedAttachments.length +
                 " unlinked attachment(s) from '" +
                 oldRootdir +
-                "'\r\n\r\n      ";
+                "'\r\n\r\n      ");
             mod.plugin = this;
             mod.callbackFunc = this.removeOrphans("execremove", orphanedAttachments);
             mod.open();
           } else {
-            showBalloon(
+            showStatusBalloon(
               isChineseDisplayLanguage()
                 ? "未找到未关联附件！"
                 : "No unlinked attachments found!",
@@ -783,7 +848,7 @@ export default class LocalImagesPlugin extends Plugin {
           });
         }
 
-        showBalloon(
+        showStatusBalloon(
           isChinese
             ? `${filesToRemove.length} 个未关联附件${msg}`
             : filesToRemove.length + " unlinked attachment(s) " + msg,
@@ -921,7 +986,7 @@ export default class LocalImagesPlugin extends Plugin {
         if (obsmdir != "" && !(await this.app.vault.adapter.exists(obsmdir))) {
           if (!this.settings.skipObsidianFolderCreation) {
             this.ensureFolderExists(obsmdir);
-            showBalloon(
+            showStatusBalloon(
               "You obsidian media folder set to '" +
                 obsmdir +
                 "', and has been created by the plugin. Please, try again. ",
@@ -1092,8 +1157,10 @@ export default class LocalImagesPlugin extends Plugin {
         }
         if (itemcount > 0) {
           await this.app.vault.modify(note, filedata);
-          showBalloon(
-            itemcount + " attachments for note " + note.path + " were processed.",
+          showStatusBalloon(
+            isChineseDisplayLanguage()
+              ? `${itemcount} 个附件（笔记：${note.path}）已处理完成。`
+              : itemcount + " attachments for note " + note.path + " were processed.",
             this.settings.showNotifications
           );
           itemcount = 0;
@@ -1140,14 +1207,7 @@ export default class LocalImagesPlugin extends Plugin {
     const savedSettings = (await this.loadData()) ?? {};
     const migratedSettings = { ...savedSettings };
 
-    if (typeof savedSettings.hideExtraCommands === "boolean") {
-      if (savedSettings.showBatchCommands === undefined) {
-        migratedSettings.showBatchCommands = !savedSettings.hideExtraCommands;
-      }
-    }
-
     this.settings = Object.assign({}, DEFAULT_SETTINGS, migratedSettings);
-    setDebugMode(this.settings.debugMode);
     this.setupQueueInterval();
   }
 

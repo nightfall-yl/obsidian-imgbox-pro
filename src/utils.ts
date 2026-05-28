@@ -7,10 +7,9 @@ import {
   USER_AGENT,
   NOTICE_TIMEOUT,
   APP_NAME,
-  APP_TITLE,
-  isDebugMode,
   ATT_SIZE_ACHOR,
 } from "./config";
+import { isChineseDisplayLanguage } from "./previewHelpers";
 
 import { requestUrl, Notice, TFile } from "obsidian";
 
@@ -20,9 +19,21 @@ export async function showBalloon(str: string, show: boolean = true, timeout = N
   }
 }
 
+export function showStatusBalloon(
+  str: string,
+  enabled: boolean = true,
+  timeout = NOTICE_TIMEOUT
+) {
+  showBalloon(str, enabled, timeout);
+}
+
 export function displayError(error: Error | string, file?: TFile): void {
   if (file) {
-    showBalloon(`LocalImagesPlus: Error while handling file ${file.name}, ${error.toString()}`);
+    showBalloon(
+      isChineseDisplayLanguage()
+        ? `处理文件 ${file.name} 时出错：${error.toString()}`
+        : `${APP_NAME}: Error while handling file ${file.name}, ${error.toString()}`
+    );
   } else {
     showBalloon(error.toString());
   }
@@ -30,16 +41,7 @@ export function displayError(error: Error | string, file?: TFile): void {
   logError(`LocalImagesPlus: error: ${error}`, false);
 }
 
-export async function logError(str: any, isObj: boolean = false) {
-  if (isDebugMode()) {
-    console.log(APP_TITLE + ":  ");
-
-    if (isObj) {
-      console.table(str);
-    } else {
-      console.log(str);
-    }
-  }
+export async function logError(_str: any, _isObj: boolean = false) {
 }
 
 export function md5Sig(contentData: ArrayBuffer = undefined) {

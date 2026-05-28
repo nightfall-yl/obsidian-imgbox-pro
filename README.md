@@ -9,7 +9,7 @@
 - 图片本地化：下载网页图片、处理粘贴 / 拖拽媒体、保存 base64 图片
 - 附件整理：支持多种保存位置、链接写法、`YYYYMMDD-HHmmss-md5前6位` 命名与去重（图片与非图片附件可分别控制）
 - 附件清理：清理未使用图片、未使用附件、当前笔记目录中的未关联附件
-- 图片交互（桌面端）：右键菜单、单击预览、拖拽缩放、导航定位高亮
+- 图片交互（桌面端）：右键菜单、单击预览、导航定位高亮
 - 图片交互（移动端）：使用 Obsidian 内置图片查看器
 - 图片跳转：图片导航栏或图片标签页右键菜单支持"跳转到原笔记"
 - 顶部导航式设置页：`图片本地化 / 图片管理`
@@ -23,21 +23,22 @@
 
 核心命令：
 
-- `Localize attachments for the current note (plugin folder)`
-- `Localize attachments for the current note (Obsidian folder)`
+- `Localize attachments for the current note (custom location)`
+- `Localize attachments for the current note (Obsidian location)`
 - `Clear Unused Images in Vault`
 - `Clear Unused Attachments in Vault`
 
 可选命令：
 
-- 批量命令（可在设置中控制显示）
-  - `Localize attachments for all your notes (plugin folder)`
+- 批量命令（默认固定显示）
+  - `Localize attachments for all your notes (custom location)`
   - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)`
 
 补充说明：
 
 - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` 仅在"保存在笔记旁边的指定文件夹"模式下可用，且目录模板必须以 `${notename}` 结尾
 - 图片导航栏或图片标签页右键菜单支持：`跳转到原笔记`
+- 命令面板入口默认全部显示，不再提供隐藏开关。
 
 ## Ribbon
 
@@ -89,7 +90,7 @@
 
 图片预览：
 
-- 桌面端：单击预览图片、预览比例、拖拽缩放、缩放步进
+- 桌面端：单击预览图片、预览比例
 - 移动端：使用 Obsidian 内置图片查看器，无需额外配置
 - 图片导航栏或图片标签页右键菜单支持"跳转到原笔记"
 
@@ -104,8 +105,7 @@
 界面与全局：
 
 - 显示通知
-- 显示批量命令
-- 调试模式
+- 命令面板入口默认全部显示，不再提供隐藏开关。
 
 ## 图片格式支持
 
@@ -139,7 +139,7 @@
 - 中文名称：`图片管理工具`
 - 插件 ID：`obsidian-imgbox-pro`
 - 版本：`26.5.6`
-- 最低 Obsidian 版本：`1.0.3`
+- 最低 Obsidian 版本：`1.11.0`
 - 平台支持：桌面端 + 移动端
 
 ## 使用提示

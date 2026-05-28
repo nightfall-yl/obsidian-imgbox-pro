@@ -172,33 +172,3 @@ export function adaptivelyDisplayImage(
     zoomedImage.style.height = `${originalHeight}px`;
   }
 }
-
-/**
- * 处理缩放图片的拖拽开始
- * @param e 鼠标事件
- * @param zoomedImage 缩放的图片
- */
-export function handleZoomDragStart(e: MouseEvent, zoomedImage: HTMLImageElement): void {
-  e.preventDefault();
-  let clickX = e.clientX;
-  let clickY = e.clientY;
-
-  const updatePosition = (moveEvt: MouseEvent) => {
-    const moveX = moveEvt.clientX - clickX;
-    const moveY = moveEvt.clientY - clickY;
-    zoomedImage.style.left = `${zoomedImage.offsetLeft + moveX}px`;
-    zoomedImage.style.top = `${zoomedImage.offsetTop + moveY}px`;
-    clickX = moveEvt.clientX;
-    clickY = moveEvt.clientY;
-  };
-
-  document.addEventListener("mousemove", updatePosition);
-  document.addEventListener(
-    "mouseup",
-    function listener() {
-      document.removeEventListener("mousemove", updatePosition);
-      document.removeEventListener("mouseup", listener);
-    },
-    { once: true }
-  );
-}

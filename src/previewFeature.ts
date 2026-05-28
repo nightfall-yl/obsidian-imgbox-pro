@@ -14,8 +14,6 @@ import {
   deleteCurTargetLink,
   handlerDelFileNew,
   handlerRenameFile,
-  print,
-  setDebug,
 } from "./previewUtil";
 
 import {
@@ -25,7 +23,6 @@ import {
   handleZoomMouseWheel,
   handleZoomContextMenu,
   adaptivelyDisplayImage,
-  handleZoomDragStart,
   updateZoomScaleDiv,
 } from "./previewZoom";
 
@@ -43,37 +40,15 @@ import {
   applyFileExplorerHighlight,
   locateFileInExplorer,
 } from "./previewExplorer";
-
-import {
-  updateInternalLink,
-  updateExternalLink,
-} from "./previewLink";
 import { VideoDivWidthChangeWatcher } from "./previewVideoWatcher";
 
 
 
 /**
- * 节流函数，限制函数的执行频率
- * @param func 要执行的函数
- * @param delay 延迟时间（毫秒）
- * @returns 节流后的函数
- */
-function throttle<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
-  let lastCall = 0;
-  return function(...args: Parameters<T>) {
-    const now = Date.now();
-    if (now - lastCall < delay) return;
-    lastCall = now;
-    func.apply(this, args);
-  };
-}
-
-/**
- * 附件流功能类，处理图片预览、右键菜单、拖拽调整大小等功能
+ * 附件流功能类，处理图片预览、右键菜单等功能
  */
 export class PreviewFeature {
   plugin: LocalImagesPlugin;
-  resizeEdgeSize = 20;
   observer?: MutationObserver;
   videoWidthWatcher?: VideoDivWidthChangeWatcher;
   highlightedExplorerPath: string | null = null;
@@ -189,7 +164,7 @@ export class PreviewFeature {
    */
   private isInsidePreviewClickZone(target: HTMLImageElement, evt: MouseEvent): boolean {
     const rect = target.getBoundingClientRect();
-    const edgeSize = Math.min(this.resizeEdgeSize, rect.width / 4, rect.height / 4);
+    const edgeSize = Math.min(20, rect.width / 4, rect.height / 4);
     const x = evt.clientX - rect.left;
     const y = evt.clientY - rect.top;
 
@@ -264,7 +239,6 @@ export class PreviewFeature {
       zoomedImage.addEventListener("contextmenu", (e) =>
         handleZoomContextMenu(e, zoomedImage, originalWidth, originalHeight, scaleDiv)
       );
-      zoomedImage.addEventListener("mousedown", (e) => handleZoomDragStart(e, zoomedImage));
       zoomedImage.addEventListener("dblclick", () => {
         adaptivelyDisplayImage(
           zoomedImage,
@@ -312,13 +286,9 @@ export class PreviewFeature {
         this.referencedNotesCache.clear();
       })
     );
-
-    setDebug(this.plugin.settings.debugMode);
   }
 
 /**
-   * 卸载插件功能
-   */
   onunload(): void {
     this.observer?.disconnect();
     this.videoWidthWatcher?.disconnect();
@@ -331,15 +301,8 @@ export class PreviewFeature {
   }
 
 /**
-   * 刷新调试模式设置
-   */
-  refreshDebug(): void {
-    setDebug(this.plugin.settings.debugMode);
-  }
-
-/**
-   * 初始化突变观察器，用于监听 DOM 变化
-   */
+ * 初始化突变观察器，用于监听 DOM 变化
+ */
   initMutationObserver(): void {
     const targetNode = document.querySelector(".workspace");
     if (!targetNode) {
@@ -433,112 +396,6 @@ export class PreviewFeature {
     );
 
     this.plugin.register(
-      onElement(doc, "mousedown", "img, video", (event: MouseEvent) => {
-        if (Platform.isMobile) {
-          return;
-        }
-        if (!this.plugin.settings.dragResizeEnabled) {
-          return;
-        }
-        const currentMd = this.plugin.app.workspace.getActiveFile();
-        if (!currentMd || currentMd.name.endsWith(".canvas")) {
-          return;
-        }
-        const inPreview =
-          this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.getMode() === "preview";
-        if (inPreview) {
-          return;
-        }
-
-        if (event.button === 0) {
-          event.preventDefault();
-        }
-        const img = event.target as HTMLImageElement | HTMLVideoElement;
-        if (img.id === "preview-zoomed-image") {
-          return;
-        }
-
-        const editor = this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
-        // 使用更安全的类型检查
-        const editorView = (editor as { cm?: EditorView })?.cm;
-        if (!editorView) {
-          return;
-        }
-        const targetPos = editorView.posAtDOM(img);
-        const inTable = img.closest("table") != null;
-        const inCallout = img.closest(".callout") != null;
-
-        const preventEvent = (evt: MouseEvent) => {
-          evt.preventDefault();
-          evt.stopPropagation();
-        };
-
-        const rect = img.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const edgeSize = this.resizeEdgeSize;
-
-        if (
-          x < edgeSize ||
-          y < edgeSize ||
-          x > rect.width - edgeSize ||
-          y > rect.height - edgeSize
-        ) {
-          const startX = event.clientX;
-          const startWidth = img.clientWidth;
-          const startHeight = img.clientHeight;
-          let lastUpdateX = startX;
-          let lastUpdate = 1;
-          let updatedWidth = startWidth;
-
-          const onMouseMove = throttle((moveEvent: MouseEvent) => {
-            img.addEventListener("click", preventEvent);
-            const currentX = moveEvent.clientX;
-            lastUpdate = currentX - lastUpdateX === 0 ? lastUpdate : currentX - lastUpdateX;
-            let newWidth = startWidth + (currentX - startX);
-            const aspectRatio = startWidth / startHeight;
-            newWidth = Math.max(Math.round(newWidth), 100);
-            const newHeight = Math.round(newWidth / aspectRatio);
-            updatedWidth = newWidth;
-
-            img.classList.add("image-in-drag-resize");
-            img.style.width = `${newWidth}px`;
-
-            this.updateImageLinkWithNewSize(img, targetPos, newWidth, newHeight);
-            lastUpdateX = moveEvent.clientX;
-          }, 50);
-
-          const allowOtherEvent = () => {
-            img.removeEventListener("click", preventEvent);
-          };
-
-          const onMouseUp = (upEvent: MouseEvent) => {
-            window.setTimeout(allowOtherEvent, 100);
-            upEvent.preventDefault();
-            img.classList.remove("image-in-drag-resize", "image-ready-click-view");
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
-
-            if (this.plugin.settings.dragResizeStep > 1) {
-              const resizeInterval = this.plugin.settings.dragResizeStep;
-              const widthOffset = lastUpdate > 0 ? resizeInterval : 0;
-              if (updatedWidth % resizeInterval !== 0) {
-                updatedWidth =
-                  Math.floor(updatedWidth / resizeInterval) * resizeInterval + widthOffset;
-              }
-              img.style.width = `${updatedWidth}px`;
-              this.updateImageLinkWithNewSize(img, targetPos, updatedWidth, 0);
-            }
-          };
-
-          // 使用plugin.registerDomEvent注册事件监听器，确保在插件卸载时被正确移除
-          this.plugin.registerDomEvent(document, "mousemove", onMouseMove);
-          this.plugin.registerDomEvent(document, "mouseup", onMouseUp);
-        }
-      })
-    );
-
-    this.plugin.register(
       onElement(doc, "mouseover", "img, video", (event: MouseEvent) => {
         if (Platform.isMobile) {
           return;
@@ -550,7 +407,6 @@ export class PreviewFeature {
         const inPreview =
           this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.getMode() === "preview";
         const img = event.target as HTMLImageElement | HTMLVideoElement;
-        const edgeSize = this.resizeEdgeSize;
         if (img.id === "preview-zoomed-image") {
           return;
         }
@@ -566,28 +422,10 @@ export class PreviewFeature {
           }
           lastMove = now;
 
-          const rect = img.getBoundingClientRect();
-          const x = moveEvent.clientX - rect.left;
-          const y = moveEvent.clientY - rect.top;
-
-          if (
-            x >= rect.width - edgeSize ||
-            x <= edgeSize ||
-            y >= rect.height - edgeSize ||
-            y <= edgeSize
-          ) {
-            if (this.plugin.settings.dragResizeEnabled && !inPreview) {
-              img.classList.remove("image-ready-click-view");
-              img.classList.add("image-ready-resize");
-            } else if (inPreview && this.plugin.settings.clickPreviewEnabled) {
-              img.classList.add("image-ready-click-view");
-              img.classList.remove("image-ready-resize");
-            }
-          } else if (this.plugin.settings.clickPreviewEnabled) {
+          if (this.plugin.settings.clickPreviewEnabled) {
             img.classList.add("image-ready-click-view");
-            img.classList.remove("image-ready-resize");
           } else {
-            img.classList.remove("image-ready-click-view", "image-ready-resize");
+            img.classList.remove("image-ready-click-view");
           }
         };
         this.plugin.registerDomEvent(img, "mousemove", mouseOverHandler);
@@ -607,8 +445,8 @@ export class PreviewFeature {
           return;
         }
         const img = event.target as HTMLImageElement | HTMLVideoElement;
-        if (this.plugin.settings.clickPreviewEnabled || this.plugin.settings.dragResizeEnabled) {
-          img.classList.remove("image-ready-click-view", "image-ready-resize");
+        if (this.plugin.settings.clickPreviewEnabled) {
+          img.classList.remove("image-ready-click-view");
         }
       })
     );
@@ -625,42 +463,6 @@ export class PreviewFeature {
 
 
 /**
-   * 更新图片链接的大小
-   * @param img 图片或视频元素
-   * @param targetPos 目标位置
-   * @param newWidth 新宽度
-   * @param newHeight 新高度
-   */
-  updateImageLinkWithNewSize = (
-    img: HTMLImageElement | HTMLVideoElement,
-    targetPos: number,
-    newWidth: number,
-    newHeight: number
-  ): void => {
-    const activeView = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
-    const inTable = img.closest("table") != null;
-    const inCallout = img.closest(".callout") != null;
-    const isExcalidraw = img.classList.contains("excalidraw-embedded-img");
-    if (!activeView) {
-      return;
-    }
-
-    let imageName = img.getAttribute("src");
-    if (imageName?.startsWith("http")) {
-      updateExternalLink(activeView, img, targetPos, newWidth, newHeight, inTable, inCallout);
-    } else if (isExcalidraw) {
-      // 从目标元素获取 Excalidraw 基础名称
-      let excalidrawTargetName = img.getAttribute("filesource") as string;
-      let fileBaseName = this.extractExcalidrawBaseName(excalidrawTargetName);
-      img.style.maxWidth = "none";
-      updateInternalLink(activeView, targetPos, fileBaseName, newWidth, inTable, inCallout);
-    } else {
-      imageName = img.closest(".internal-embed")?.getAttribute("src") as string;
-      updateInternalLink(activeView, targetPos, imageName, newWidth, inTable, inCallout);
-    }
-  };
-
-/**
    * 处理外部图片的右键菜单
    * @param event 鼠标事件
    */
@@ -674,7 +476,7 @@ export class PreviewFeature {
 
     event.preventDefault();
     this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor?.blur();
-    img.classList.remove("image-ready-click-view", "image-ready-resize");
+    img.classList.remove("image-ready-click-view");
     const menu = new Menu();
     const inPreview =
       this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.getMode() === "preview";
@@ -748,7 +550,7 @@ export class PreviewFeature {
       return;
     }
 
-    target.classList.remove("image-ready-click-view", "image-ready-resize");
+    target.classList.remove("image-ready-click-view");
 
     if (isExcalidraw) {
       // 从目标元素获取 Excalidraw 基础名称
@@ -806,5 +608,3 @@ export class PreviewFeature {
     this.plugin.app.workspace.trigger("Preview:contextmenu", menu);
   }
 }
-
-
