@@ -2,7 +2,7 @@
 
 > An image management toolkit for Obsidian
 
-`ImgBox Pro` is an Obsidian plugin for managing images and attachments, supporting both desktop and mobile. It combines media localization, attachment cleanup, and preview interaction enhancements in a single plugin.
+`ImgBox Pro` is an Obsidian plugin for managing images and attachments, supporting both desktop and mobile. It combines media localization, attachment cleanup, and preview interaction enhancements in a single plugin, suitable for long-term maintenance of notes with large numbers of attachments.
 
 ## Features Overview
 
@@ -25,20 +25,14 @@ Core commands:
 
 - `Localize attachments for the current note (custom location)`
 - `Localize attachments for the current note (Obsidian location)`
+- `Localize attachments for all your notes (custom location)`
 - `Clear Unused Images in Vault`
 - `Clear Unused Attachments in Vault`
-
-Optional commands:
-
-- Batch commands (always shown)
-  - `Localize attachments for all your notes (custom location)`
-  - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)`
+- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)`
 
 Notes:
 
 - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` is only available in "next to note" mode, and the folder pattern must end with `${notename}`
-- the image navigator or image-tab context menu provides: `Go to Source Note`
-- Command palette entries are always shown; there is no visibility toggle.
 
 ## Ribbon
 
@@ -105,7 +99,7 @@ Image Cleanup:
 UI & Global:
 
 - show notifications
-- Command palette entries are always shown; there is no visibility toggle.
+- Command palette entries are always shown by default; there is no visibility toggle.
 
 ## Supported Image Formats
 
@@ -136,15 +130,16 @@ Notes:
 ## Current Version
 
 - plugin name: `ImgBox Pro`
+- Chinese name: `图片管理工具`
 - plugin id: `obsidian-imgbox-pro`
-- version: `26.5.6`
+- version: `26.5.7`
 - minimum Obsidian version: `1.11.0`
 - platform support: desktop + mobile
 
 ## Usage Notes
 
-- Back up your vault before batch processing, cleanup, or large-scale link rewriting
-- `Clear Unused Images in Vault` and `Clear Unused Attachments in Vault` scan the whole vault
+- Back up your vault before batch processing, batch cleanup, or large-scale link rewriting
+- `Clear Unused Images in Vault` / `Clear Unused Attachments in Vault` scan the whole vault
 - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` only targets the current note's attachment folder
 
 ## Credits

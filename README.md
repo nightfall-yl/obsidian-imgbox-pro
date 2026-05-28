@@ -2,7 +2,7 @@
 
 > 图片管理工具
 
-`ImgBox Pro` 是一个 Obsidian 图片与附件管理插件，支持桌面端和移动端。它把图片本地化、图片预览和图片清理交互整合到一个插件里，适合长期维护包含大量媒体资源的笔记。
+`ImgBox Pro` 是一个 Obsidian 图片与附件管理插件，支持桌面端和移动端。它把图片本地化、图片预览和附件清理交互整合到一个插件里，适合长期维护包含大量附件的笔记。
 
 ## 功能概览
 
@@ -25,20 +25,14 @@
 
 - `Localize attachments for the current note (custom location)`
 - `Localize attachments for the current note (Obsidian location)`
+- `Localize attachments for all your notes (custom location)`
 - `Clear Unused Images in Vault`
 - `Clear Unused Attachments in Vault`
-
-可选命令：
-
-- 批量命令（默认固定显示）
-  - `Localize attachments for all your notes (custom location)`
-  - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)`
+- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)`
 
 补充说明：
 
 - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` 仅在"保存在笔记旁边的指定文件夹"模式下可用，且目录模板必须以 `${notename}` 结尾
-- 图片导航栏或图片标签页右键菜单支持：`跳转到原笔记`
-- 命令面板入口默认全部显示，不再提供隐藏开关。
 
 ## Ribbon
 
