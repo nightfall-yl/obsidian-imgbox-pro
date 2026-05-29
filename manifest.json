@@ -8,6 +8,7 @@
   "authorUrl": "https://github.com/nightfall-yl",
   "isDesktopOnly": false,
   "permissions": [
-    "vault-access"
+    "vault-access",
+    "clipboard"
   ]
 }
