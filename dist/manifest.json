@@ -6,9 +6,5 @@
   "description": "Searches for external media links in your notes, downloads and saves them locally, adjusts note links, and includes unused attachment cleanup tools.",
   "author": "nightfall",
   "authorUrl": "https://github.com/nightfall-yl",
-  "isDesktopOnly": false,
-  "permissions": [
-    "vault-access",
-    "clipboard"
-  ]
+  "isDesktopOnly": false
 }
