@@ -34,7 +34,7 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     navLocalize: "图片本地化",
     navPreview: "图片管理",
     subgroupAutoTriggerTitle: "自动触发",
-    subgroupGlobalTitle: "界面与全局",
+    subgroupGlobalTitle: "通知",
     subgroupPreviewTitle: "图片预览",
     subgroupCleanupTitle: "图片清理",
     showNotifications: "显示通知",
@@ -107,8 +107,8 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     deleteObsidianTrash: "移动到 Obsidian 回收站",
     deleteSystemTrash: "移动到系统回收站",
     deletePermanentWarning: "⚠ 永久删除不可恢复！请谨慎操作。",
-    showOperationLogs: "显示操作日志弹窗",
-    showOperationLogsDesc: "操作完成后弹出包含操作详情的日志窗口。",
+    showOperationLogs: "命令操作日志弹窗",
+    showOperationLogsDesc: "Ribbon/命令操作完成后，弹出包含操作详情的日志窗口。",
     excludeSubfolders: "清理时排除子文件夹",
     excludeSubfoldersDesc:
       "启用后，被排除的文件夹及其所有子文件夹在\u201c图片清理\u201d时都会被跳过。",
@@ -131,7 +131,7 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     previewImageNameExample: "图片",
     previewAttachmentNameExample: "附件",
     previewFallbackNote: "示例/示例笔记.md",
-    commandPaletteSummary: "查看命令面板入口说明（默认固定显示）",
+    commandPaletteSummary: "命令面板说明（展开/折叠）",
     cmdLocalizeObsidian: "本地化当前笔记附件（Obsidian 位置）",
     cmdLocalizeObsidianDesc: "将当前笔记中的外部图片链接（网页 URL、base64）下载到 Obsidian 默认的附件目录，并自动改写笔记中的链接指向本地文件。",
     cmdLocalizePlugin: "本地化当前笔记附件（自定义位置）",
@@ -149,7 +149,7 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     navLocalize: "Localize",
     navPreview: "Image Management",
     subgroupAutoTriggerTitle: "Auto Trigger",
-    subgroupGlobalTitle: "UI & Global",
+    subgroupGlobalTitle: "Notifications",
     subgroupPreviewTitle: "Image Preview",
     subgroupCleanupTitle: "Image Cleanup",
     showNotifications: "Show notifications",
@@ -230,8 +230,8 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     deleteObsidianTrash: "Move to Obsidian Trash",
     deleteSystemTrash: "Move to System Trash",
     deletePermanentWarning: "⚠ Permanent deletion cannot be undone! Please be careful.",
-    showOperationLogs: "Show operation log modal",
-    showOperationLogsDesc: "Show a log modal with details after operations complete.",
+    showOperationLogs: "Command operation log modal",
+    showOperationLogsDesc: "After Ribbon/command operations complete, show a log modal with operation details.",
     excludeSubfolders: "Exclude subfolders during cleanup",
     excludeSubfoldersDesc:
       "When enabled, excluded folders and all their subfolders are skipped during image cleanup.",
@@ -256,7 +256,7 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     previewImageNameExample: "Image",
     previewAttachmentNameExample: "Attachment",
     previewFallbackNote: "Example/Example Note.md",
-    commandPaletteSummary: "View command palette entry descriptions (always shown)",
+    commandPaletteSummary: "Command palette entry descriptions",
     cmdLocalizeObsidian: "Localize attachments for the current note (Obsidian location)",
     cmdLocalizeObsidianDesc:
       "Download external image links (web URLs, base64) in the current note to the Obsidian default attachment directory, and automatically rewrite links to point to local files.",
@@ -448,45 +448,38 @@ export default class SettingTab extends PluginSettingTab {
   private createConfigPreview(
     containerEl: HTMLElement,
     t: (key: string) => string
-  ): { wrapper: HTMLElement; refresh: () => Promise<void> } {
-    const wrapper = containerEl.createDiv({ cls: "lip-config-preview" });
-    const header = wrapper.createDiv({ cls: "lip-config-preview-header" });
-    header.createDiv({ text: t("configPreviewTitle"), cls: "lip-config-preview-title" });
-    header.createDiv({ text: t("configPreviewHint"), cls: "lip-config-preview-hint" });
+  ): { refresh: () => Promise<void> } {
+    const group = new SettingGroup(containerEl).setHeading(t("configPreviewTitle"));
 
-    const rows = wrapper.createDiv({ cls: "lip-config-preview-rows" });
+    const noteSetting = this.createSetting(group);
+    noteSetting.setName(t("previewCurrentNote")).setDesc(t("configPreviewHint"));
+    const noteDescEl = noteSetting.descEl;
 
-    const noteRow = rows.createDiv({ cls: "lip-config-preview-row" });
-    noteRow.createDiv({ text: t("previewCurrentNote"), cls: "lip-config-preview-label" });
-    const noteValue = noteRow.createDiv({ cls: "lip-config-preview-value" });
+    const dirSetting = this.createSetting(group);
+    dirSetting.setName(t("previewAttachmentDir"));
+    const dirDescEl = dirSetting.descEl;
 
-    const dirRow = rows.createDiv({ cls: "lip-config-preview-row" });
-    dirRow.createDiv({ text: t("previewAttachmentDir"), cls: "lip-config-preview-label" });
-    const dirValue = dirRow.createDiv({ cls: "lip-config-preview-value" });
+    const linkSetting = this.createSetting(group);
+    linkSetting.setName(t("previewLinkExample"));
+    const linkDescEl = linkSetting.descEl;
+    linkDescEl.addClass("lip-config-preview-mono");
 
-    const linkRow = rows.createDiv({ cls: "lip-config-preview-row" });
-    linkRow.createDiv({ text: t("previewLinkExample"), cls: "lip-config-preview-label" });
-    const linkValue = linkRow.createDiv({
-      cls: "lip-config-preview-value lip-config-preview-mono",
-    });
-
-    const nameRow = rows.createDiv({ cls: "lip-config-preview-row" });
-    nameRow.createDiv({ text: t("previewNameExample"), cls: "lip-config-preview-label" });
-    const nameValue = nameRow.createDiv({
-      cls: "lip-config-preview-value lip-config-preview-mono",
-    });
+    const nameSetting = this.createSetting(group);
+    nameSetting.setName(t("previewNameExample"));
+    const nameDescEl = nameSetting.descEl;
+    nameDescEl.addClass("lip-config-preview-mono");
 
     const refresh = async () => {
       const preview = await this.buildConfigPreview(t("previewFallbackNote"));
-      noteValue.setText(preview.noteLabel);
-      dirValue.setText(preview.attachmentDir);
-      linkValue.setText(preview.linkExample);
-      nameValue.setText(
+      noteDescEl.setText(preview.noteLabel);
+      dirDescEl.setText(preview.attachmentDir);
+      linkDescEl.setText(preview.linkExample);
+      nameDescEl.setText(
         `${t("previewImageNameExample")}: ${preview.imageNameExample} | ${t("previewAttachmentNameExample")}: ${preview.attachmentNameExample}`
       );
     };
 
-    return { wrapper, refresh };
+    return { refresh };
   }
 
   private createCommandDetails(
@@ -494,15 +487,47 @@ export default class SettingTab extends PluginSettingTab {
     summary: string,
     commands: Array<{ name: string; desc: string }>
   ): void {
-    const detailsEl = containerEl.createEl("details", { cls: "lip-command-details" });
-    detailsEl.createEl("summary", { text: summary });
-    const listEl = detailsEl.createDiv({ cls: "lip-command-details-list" });
+    const group = new SettingGroup(containerEl).setHeading(summary);
 
     for (const command of commands) {
-      const itemEl = listEl.createDiv({ cls: "lip-command-details-item" });
-      itemEl.createDiv({ text: command.name, cls: "lip-command-details-name" });
-      itemEl.createDiv({ text: command.desc, cls: "lip-command-details-desc" });
+      group.addSetting((setting) => {
+        setting.setName(command.name).setDesc(command.desc);
+      });
     }
+
+    const groups = containerEl.querySelectorAll(":scope > .setting-group");
+    const groupEl = groups[groups.length - 1] as HTMLElement;
+    if (!groupEl) return;
+
+    const headingEl = groupEl.querySelector(
+      ":scope > .setting-item-heading"
+    ) as HTMLElement;
+    const itemsEl = groupEl.querySelector(
+      ":scope > .setting-items"
+    ) as HTMLElement;
+    if (!headingEl || !itemsEl) return;
+
+    groupEl.addClass("lip-collapsible");
+    itemsEl.style.display = "none";
+
+    headingEl.setAttribute("tabindex", "0");
+    headingEl.setAttribute("role", "button");
+    headingEl.setAttribute("aria-expanded", "false");
+
+    const toggle = () => {
+      const isOpen = groupEl.hasClass("is-open");
+      groupEl.toggleClass("is-open", !isOpen);
+      itemsEl.style.display = isOpen ? "none" : "";
+      headingEl.setAttribute("aria-expanded", String(!isOpen));
+    };
+
+    headingEl.addEventListener("click", toggle);
+    headingEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      }
+    });
   }
 
   display(): void {
@@ -534,7 +559,7 @@ export default class SettingTab extends PluginSettingTab {
 
     sections.forEach((section, index) => {
       const button = navEl.createEl("button", {
-        cls: "lip-settings-nav-btn",
+        cls: "setting-item-heading lip-settings-nav-btn",
         attr: { type: "button" },
       });
       const iconEl = button.createSpan({ cls: "lip-settings-nav-icon" });
@@ -867,6 +892,16 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
+    this.createSetting(globalGroupEl)
+      .setName(t("showOperationLogs"))
+      .setDesc(t("showOperationLogsDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showOperationLogs).onChange(async (value) => {
+          this.plugin.settings.showOperationLogs = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
     const previewGroupEl = this.createSettingGroup(previewEl, t("subgroupPreviewTitle"));
 
     if (Platform.isDesktop) {
@@ -917,9 +952,9 @@ export default class SettingTab extends PluginSettingTab {
       .setDesc(t("deleteDestinationDesc"))
       .addDropdown((dropdown) => {
         dropdown
-          .addOption("permanent", t("deletePermanent"))
           .addOption(".trash", t("deleteObsidianTrash"))
           .addOption("system-trash", t("deleteSystemTrash"))
+          .addOption("permanent", t("deletePermanent"))
           .setValue(this.plugin.settings.deleteDestination)
           .onChange(async (value) => {
             this.plugin.settings.deleteDestination = value;
@@ -932,16 +967,6 @@ export default class SettingTab extends PluginSettingTab {
       cls: "lip-settings-danger-warning",
     });
     this.updateDeleteDangerWarning(deleteWarningEl, this.plugin.settings.deleteDestination, t);
-
-    this.createSetting(cleanupGroupEl)
-      .setName(t("showOperationLogs"))
-      .setDesc(t("showOperationLogsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.showOperationLogs).onChange(async (value) => {
-          this.plugin.settings.showOperationLogs = value;
-          await this.plugin.saveSettings();
-        })
-      );
 
     this.createSetting(cleanupGroupEl)
       .setName(t("excludedFolders"))
@@ -1000,5 +1025,10 @@ export default class SettingTab extends PluginSettingTab {
 
     updateAutoProcessSettings();
     updateAttachmentFolderSettings();
+  }
+
+  hide(): void {
+    const { containerEl } = this;
+    containerEl.removeClass("lip-settings-root");
   }
 }

@@ -19,7 +19,7 @@
 
 ## Common Commands
 
-Command palette entries are intentionally kept in English.
+Command palette entries automatically follow Obsidian's display language.
 
 Core commands:
 
@@ -82,6 +82,11 @@ Image Compression:
 
 ### Image Management
 
+Notifications:
+
+- show notifications
+- command operation log modal
+
 Image Preview:
 
 - Desktop: click-to-preview, preview ratio
@@ -91,15 +96,9 @@ Image Preview:
 Image Cleanup:
 
 - show cleanup Ribbon icon
-- deletion target (trash / permanent delete / Obsidian Trash / System Trash)
-- show operation log modal
+- delete destination (Obsidian Trash / System Trash / Delete permanently)
 - excluded folder list
 - exclude subfolders during cleanup
-
-UI & Global:
-
-- show notifications
-- Command palette entries are always shown by default; there is no visibility toggle.
 
 ## Supported Image Formats
 
@@ -132,7 +131,7 @@ Notes:
 - plugin name: `ImgBox Pro`
 - Chinese name: `图片管理工具`
 - plugin id: `obsidian-imgbox-pro`
-- version: `26.5.7`
+- version: `1.0.0`
 - minimum Obsidian version: `1.11.0`
 - platform support: desktop + mobile
 

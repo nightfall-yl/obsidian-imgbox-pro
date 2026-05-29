@@ -81,7 +81,7 @@ export interface ISettings {
   previewAdaptiveRatio: number;
 }
 
-export const DEFAULT_SETTINGS: ISettings = {
+export const DEFAULT_SETTINGS: Partial<ISettings> = {
   // 通用
   showNotifications: true,
   showCleanupRibbon: true,
