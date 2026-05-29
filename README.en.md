@@ -126,15 +126,6 @@ Notes:
 4. Restart Obsidian
 5. Enable `ImgBox Pro` in Community Plugins
 
-## Current Version
-
-- plugin name: `ImgBox Pro`
-- Chinese name: `图片管理工具`
-- plugin id: `obsidian-imgbox-pro`
-- version: `1.0.0`
-- minimum Obsidian version: `1.11.0`
-- platform support: desktop + mobile
-
 ## Usage Notes
 
 - Back up your vault before batch processing, batch cleanup, or large-scale link rewriting
