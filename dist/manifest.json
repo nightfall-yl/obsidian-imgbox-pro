@@ -5,6 +5,6 @@
     "minAppVersion": "1.11.0", 
     "description": "ImgBox Pro searches for external media links in your notes, downloads and saves them locally, adjusts note links, and includes unused attachment cleanup tools.", 
     "author": "nightfall", 
-    "authorUrl": "https://github.com/nightfall-yl/ImgBox-Pro", 
+    "authorUrl": "https://github.com/nightfall-yl/obsidian-imgbox-pro", 
     "isDesktopOnly": false
 }
