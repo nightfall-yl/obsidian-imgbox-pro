@@ -135,9 +135,25 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
 body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] [aria-selected="true"],
 body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .is-active,
 body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .mod-active {
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+}
+
+/* Double selector for higher specificity to override Obsidian defaults */
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .tree-item-self.is-active,
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .tree-item-self.mod-active,
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .tree-item-self[aria-selected="true"],
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .nav-file-title.is-active,
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .nav-folder-title.is-active,
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .nav-file-title.mod-active,
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .nav-folder-title.mod-active,
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] [aria-selected="true"],
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .is-active,
+body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-explorer"] .mod-active {
+  background: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
 #af-zoomed-image {
@@ -163,8 +179,8 @@ body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="file-exp
   display: block;
 }
 
-.lip-conditional-hidden {
-  display: none !important;
+.lip-conditional-hidden.lip-conditional-hidden {
+  display: none;
 }
 
 .lip-config-preview-mono {

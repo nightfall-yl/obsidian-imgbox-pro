@@ -1,5 +1,5 @@
 import filenamify from "filenamify/browser";
-import md5 from "crypto-js/md5";
+import md5 from "md5";
 
 import {
   FORBIDDEN_SYMBOLS_FILENAME_PATTERN,
@@ -57,7 +57,7 @@ export function md5Sig(contentData: ArrayBuffer = undefined) {
       ]
         .map((x) => dec.decode(x))
         .join()
-    ).toString();
+    );
 
     return signature + "_MD5";
   } catch (e) {
