@@ -1,7 +1,7 @@
 {
-    "id": "obsidian-imgbox-pro", 
+    "id": "imgbox-pro", 
     "name": "ImgBox Pro", 
-    "version": "1.0.0", 
+    "version": "26.0.0", 
     "minAppVersion": "1.11.0", 
     "description": "ImgBox Pro searches for external media links in your notes, downloads and saves them locally, adjusts note links, and includes unused attachment cleanup tools.", 
     "author": "nightfall", 
