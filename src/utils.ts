@@ -1,5 +1,5 @@
 import filenamify from "filenamify/browser";
-import md5 from "md5";
+import md5 from "blueimp-md5";
 
 import {
   FORBIDDEN_SYMBOLS_FILENAME_PATTERN,
