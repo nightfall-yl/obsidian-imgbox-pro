@@ -1,27 +1,27 @@
 # ImgBox Pro
 
-> 图片管理工具
+> An image management toolkit for Obsidian
 
-`ImgBox Pro` 是一个 Obsidian 图片与附件管理插件，支持桌面端和移动端。它把图片本地化、图片预览和附件清理交互整合到一个插件里，适合长期维护包含大量附件的笔记。
+`ImgBox Pro` is an Obsidian plugin for managing images and attachments, supporting both desktop and mobile. It combines media localization, attachment cleanup, and preview interaction enhancements in a single plugin, suitable for long-term maintenance of notes with large numbers of attachments.
 
-## 功能概览
+## Features Overview
 
-- 图片本地化：下载网页图片、处理粘贴 / 拖拽媒体、保存 base64 图片
-- 附件整理：支持多种保存位置、链接写法、`YYYYMMDD-HHmmss-md5前6位` 命名与去重（图片与非图片附件可分别控制）
-- 附件清理：清理未使用图片、未使用附件、当前笔记目录中的未关联附件
-- 图片交互（桌面端）：右键菜单、单击预览、导航定位高亮
-- 图片交互（移动端）：使用 Obsidian 内置图片查看器
-- 图片跳转：图片导航栏或图片标签页右键菜单支持"跳转到原笔记"
-- 顶部导航式设置页：`图片本地化 / 图片管理`
-- 设置页语言自动跟随 Obsidian 系统界面语言
-- 清理 `Ribbon` 快捷入口
-- 命令面板完整入口
+- Image localization: download web images, handle pasted / dragged media, save base64 images
+- Attachment organization: multiple save locations, link styles, `YYYYMMDD-HHmmss-md5-first-6` naming, deduplication (images and non-image attachments can be controlled separately)
+- Attachment cleanup: unused images, unused attachments, and unlinked attachments in the current note folder
+- Image interaction (desktop): context menu, click-to-preview, navigator highlight
+- Image interaction (mobile): uses the built-in Obsidian image viewer
+- Source-note jump: image navigator or image-tab context menu supports `Go to Source Note`
+- Top-navigation settings UI: `Localize / Image Management`
+- Settings page language automatically follows Obsidian's system language
+- Cleanup `Ribbon` shortcut
+- Full command palette access
 
-## 常用命令
+## Common Commands
 
-命令面板中的命令名称会跟随 Obsidian 显示语言自动切换。
+Command palette entries automatically follow Obsidian's display language.
 
-核心命令：
+Core commands:
 
 - `Localize attachments for the current note (custom location)`
 - `Localize attachments for the current note (Obsidian location)`
@@ -30,109 +30,109 @@
 - `Clear Unused Attachments in Vault`
 - `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)`
 
-补充说明：
+Notes:
 
-- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` 仅在"保存在笔记旁边的指定文件夹"模式下可用，且目录模板必须以 `${notename}` 结尾
+- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` is only available in "next to note" mode, and the folder pattern must end with `${notename}`
 
 ## Ribbon
 
-插件提供一个左侧清理 `Ribbon` 按钮：
+The plugin provides one left cleanup `Ribbon` action:
 
-- 中文界面：`清理未使用图片`
-- 其他界面：`Clear unused images`
+- Chinese UI: `清理未使用图片`
+- Other UI languages: `Clear unused images`
 
-点击后执行：
+It triggers:
 
 - `Clear Unused Images in Vault`
 
-## 设置页
+## Settings
 
-### 图片本地化
+### Localize
 
-自动触发：
+Auto Trigger:
 
-- 自动处理开关与间隔
-- 处理新建 Markdown 文件
+- automatic processing switch and interval
+- process newly created Markdown files
 
-存储命名：
+Storage & Naming:
 
-- 处理所有新附件
-- 新附件保存位置（跟随 Obsidian / 保存在笔记旁边 / 保存到根目录）
-- 媒体文件夹路径
-- 同步移动、删除或重命名媒体文件夹
-- 新图片使用时间+MD5 命名
-- 新附件（非图片）使用时间+MD5 命名
-- 添加原始文件名或打开文件标签
-- 保留链接标题
-- 标签中的路径写法
-- 不创建 Obsidian 附件文件夹
+- process all new attachments
+- save location (follow Obsidian / next to note / root directory)
+- media folder path
+- move, delete, or rename media folder together
+- use time + MD5 names for new images
+- use time + MD5 names for new non-image attachments
+- add original filename or open-file tag
+- preserve link captions
+- path format in tags
+- do not create Obsidian attachment folder
 
-下载行为：
+Download Behavior:
 
-- 单个附件重试次数
-- 下载未知文件类型
-- 文件大小下限（KB）
-- 排除扩展名
+- retry count per attachment
+- download unknown file types
+- file size lower limit (KB)
+- excluded extensions
 
-图片压缩：
+Image Compression:
 
-- 压缩图片开关
-- 压缩格式（WebP / JPEG）
-- 图片质量
+- compress images toggle
+- compression format (WebP / JPEG)
+- image quality
 
-### 图片管理
+### Image Management
 
-通知：
+Notifications:
 
-- 显示通知
-- 命令操作日志弹窗
+- show notifications
+- command operation log modal
 
-图片预览：
+Image Preview:
 
-- 桌面端：单击预览图片、预览比例
-- 移动端：使用 Obsidian 内置图片查看器，无需额外配置
-- 图片导航栏或图片标签页右键菜单支持"跳转到原笔记"
+- Desktop: click-to-preview, preview ratio
+- Mobile: uses the built-in Obsidian image viewer. No configuration needed.
+- Image navigator or image-tab context menu supports `Go to Source Note`
 
-图片清理：
+Image Cleanup:
 
-- 显示图片清理 Ribbon 图标
-- 删除去向（Obsidian 回收站 / 系统回收站 / 永久删除）
-- 排除文件夹列表
-- 清理时排除子文件夹
+- show cleanup Ribbon icon
+- delete destination (Obsidian Trash / System Trash / Delete permanently)
+- excluded folder list
+- exclude subfolders during cleanup
 
-## 图片格式支持
+## Supported Image Formats
 
-| 格式 | 识别 | 保存 | 未使用图片清理 | 压缩输出 |
+| Format | Detect | Save | Included in unused-image cleanup | Compression output |
 |---|---|---:|---:|---:|
-| `jpg` / `jpeg` | 支持 | 支持 | 支持 | 否 |
-| `png` | 支持 | 支持 | 支持 | 是，可转为 `jpeg` / `webp` |
-| `gif` | 支持 | 支持 | 支持 | 否 |
-| `svg` | 支持 | 支持 | 支持 | 否 |
-| `bmp` | 支持 | 支持 | 支持 | 否 |
-| `webp` | 支持 | 支持 | 支持 | 是 |
-| `avif` | 支持 | 支持 | 支持 | 否 |
-| `heic` | 支持 | 支持 | 支持 | 否 |
+| `jpg` / `jpeg` | Yes | Yes | Yes | No |
+| `png` | Yes | Yes | Yes | Yes, can be converted to `jpeg` / `webp` |
+| `gif` | Yes | Yes | Yes | No |
+| `svg` | Yes | Yes | Yes | No |
+| `bmp` | Yes | Yes | Yes | No |
+| `webp` | Yes | Yes | Yes | Yes |
+| `avif` | Yes | Yes | Yes | No |
+| `heic` | Yes | Yes | Yes | No |
 
-补充说明：
+Notes:
 
-- `webp`、`avif` 与 `heic` 可以正常识别、保存与清理
-- 图片压缩目前主要针对 `png`
+- `webp`, `avif`, and `heic` are recognized, saved, and cleaned correctly
+- image compression currently mainly targets `png`
 
-## 安装
+## Installation
 
-1. 打开 Obsidian vault
-2. 进入 `.obsidian/plugins/`
-3. 将插件目录放入其中
-4. 重启 Obsidian
-5. 在"社区插件"中启用 `ImgBox Pro`
+1. Open your Obsidian vault
+2. Go to `.obsidian/plugins/`
+3. Copy the plugin folder into it
+4. Restart Obsidian
+5. Enable `ImgBox Pro` in Community Plugins
 
-## 使用提示
+## Usage Notes
 
-- 批量处理、批量清理、批量改写链接前，建议先备份 vault
-- `Clear Unused Images in Vault` / `Clear Unused Attachments in Vault` 面向整个 vault
-- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` 面向当前笔记附件目录
+- Back up your vault before batch processing, batch cleanup, or large-scale link rewriting
+- `Clear Unused Images in Vault` / `Clear Unused Attachments in Vault` scan the whole vault
+- `Clear Unlinked Attachments in Current Note Folder (Next to Note mode)` only targets the current note's attachment folder
 
-## 致谢
+## Credits
 
 - [Sergei-Korneev/obsidian-local-images-plus](https://github.com/Sergei-Korneev/obsidian-local-images-plus)
 - [elf004-star/Obsidian-AttachFlow](https://github.com/elf004-star/Obsidian-AttachFlow)
@@ -142,8 +142,8 @@
 
 - [nightfall-yl/obsidian-imgbox-pro](https://github.com/nightfall-yl/obsidian-imgbox-pro)
 
-## 许可证
+## License
 
-使用本插件即表示你接受项目许可证条款。许可证文件见：
+Using this plugin means you accept the project license terms. See:
 
 - `LICENSE`
