@@ -191,9 +191,9 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
 /* Settings: navigation */
 .lip-settings-nav {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--size-4-2) var(--size-4-4);
-  margin: var(--size-4-4) 0 0;
+  margin-bottom: var(--size-4-5);
   padding: 0 0 var(--size-4-4);
   border-bottom: 1px solid var(--background-modifier-border);
 }
@@ -268,7 +268,11 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
 /* 桌面端: 页面=primary(浅) 卡片=secondary(深) → 浅→深              */
 /* 移动端: 页面=secondary(深) 卡片=primary(浅) → 深→浅（反向！）     */
 /* ═══════════════════════════════════════════════════════════════ */
-@media (max-width: 720px) {
+@media (max-width: 768px) {
+  .lip-settings-root {
+    --setting-items-background: var(--background-primary);
+  }
+
   .lip-settings-nav {
     gap: var(--size-4-2) var(--size-4-3);
   }
@@ -279,6 +283,10 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
 
   .lip-settings-nav-btn.is-active {
     background: var(--background-modifier-hover);
+  }
+
+  .theme-dark .lip-settings-root {
+    --setting-items-background: var(--background-primary-alt);
   }
 }
 
@@ -314,7 +322,7 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
   background: var(--background-primary-alt);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .theme-light .unused-images-preview-list {
     background: var(--background-primary);
   }
