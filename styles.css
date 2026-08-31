@@ -166,97 +166,8 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
   padding-top: var(--size-4-6);
 }
 
-.lip-settings-section {
-  display: none;
-  animation: lip-settings-fade-in 140ms ease;
-}
-
-.lip-settings-section.is-active {
-  display: block;
-}
-
 .lip-conditional-hidden.lip-conditional-hidden {
   display: none;
-}
-
-.lip-config-preview-mono {
-  font-family: var(--font-monospace);
-  font-size: var(--font-ui-smaller);
-}
-
-/* Settings: navigation */
-.lip-settings-nav {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: var(--size-4-2) var(--size-4-4);
-  margin-bottom: var(--size-4-5);
-  padding: 0 0 var(--size-4-4);
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.lip-settings-nav-btn {
-  appearance: none;
-  -webkit-appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--size-4-2);
-  border: 0;
-  border-radius: var(--radius-m);
-  background: transparent;
-  cursor: pointer;
-  box-shadow: none;
-  outline: none;
-  transition: background-color 140ms ease, color 140ms ease;
-}
-
-.lip-settings-nav-btn:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-}
-
-.lip-settings-nav-btn:not(.is-active) {
-  background: transparent;
-  box-shadow: none;
-}
-
-.lip-settings-nav-btn:not(.is-active):focus,
-.lip-settings-nav-btn:not(.is-active):focus-visible {
-  outline: none;
-  box-shadow: none;
-}
-
-.lip-settings-nav-btn.is-active {
-  background: var(--background-modifier-hover);
-  box-shadow: none;
-}
-
-.lip-settings-nav-btn.is-active .svg-icon {
-  color: var(--text-normal);
-}
-
-.lip-settings-nav-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: currentColor;
-}
-
-.lip-settings-nav-icon .svg-icon {
-  width: var(--size-4-5);
-  height: var(--size-4-5);
-  stroke-width: 1.9px;
-}
-
-@keyframes lip-settings-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -267,18 +178,6 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
 @media (max-width: 768px) {
   .lip-settings-root {
     --setting-items-background: var(--background-primary);
-  }
-
-  .lip-settings-nav {
-    gap: var(--size-4-2) var(--size-4-3);
-  }
-
-  .lip-settings-nav-btn {
-    border-radius: var(--touch-radius-xs);
-  }
-
-  .lip-settings-nav-btn.is-active {
-    background: var(--background-modifier-hover);
   }
 
   .theme-dark .lip-settings-root {
@@ -318,6 +217,12 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
   background: var(--background-primary-alt);
 }
 
+.lip-settings-dependent.is-disabled,
+.setting-item.is-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 @media (max-width: 768px) {
   .theme-light .unused-images-preview-list {
     background: var(--background-primary);
@@ -344,10 +249,6 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
   .theme-dark .lip-collapsible .setting-items {
     background: var(--background-primary-alt);
   }
-}
-
-.lip-settings-dependent.is-hidden {
-  transition: max-height 200ms ease-in, opacity 200ms ease-in, margin-top 200ms ease-in;
 }
 
 /* Settings: collapsible SettingGroup */

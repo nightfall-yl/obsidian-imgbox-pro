@@ -5,8 +5,6 @@ import {
   PluginSettingTab,
   Setting,
   SettingGroup,
-  TFile,
-  setIcon,
 } from "obsidian";
 
 import { displayError, logError, trimAny } from "./utils";
@@ -14,14 +12,6 @@ import { displayError, logError, trimAny } from "./utils";
 import { APP_NAME } from "./config";
 
 import LocalImagesPlugin from "./main";
-import { getMDir, getRDir } from "./contentProcessor";
-import { generateTimestampRandomName, pathJoin } from "./utils";
-
-type SettingsSection = {
-  id: string;
-  label: string;
-  icon: string;
-};
 
 /** Detect Obsidian's display language */
 function getObsidianLang(): "zh-CN" | "en" {
@@ -31,8 +21,6 @@ function getObsidianLang(): "zh-CN" | "en" {
 
 const LOCALE_TEXT: Record<string, Record<string, string>> = {
   "zh-CN": {
-    navLocalize: "图片本地化",
-    navPreview: "图片管理",
     subgroupAutoTriggerTitle: "自动触发",
     subgroupGlobalTitle: "通知",
     subgroupCleanupTitle: "图片清理",
@@ -114,32 +102,8 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     excludedFolders: "排除文件夹",
     excludedFoldersDesc: "这些文件夹中的文件不会被自动处理，\u201c图片清理\u201d也会跳过它们。",
     excludedFoldersPlaceholder: "每行输入一个完整路径，例如 RootFolder/Subfolder",
-    configPreviewTitle: "当前配置预览",
-    configPreviewHint: "会按当前设置和当前笔记动态计算。",
-    previewCurrentNote: "当前笔记",
-    previewAttachmentDir: "最终附件目录",
-    previewLinkExample: "链接写法示例",
-    previewNameExample: "命名示例",
-    previewImageNameExample: "图片",
-    previewAttachmentNameExample: "附件",
-    previewFallbackNote: "示例/示例笔记.md",
-    commandPaletteSummary: "命令面板说明（展开/折叠）",
-    cmdLocalizeObsidian: "本地化当前笔记附件（Obsidian 位置）",
-    cmdLocalizeObsidianDesc: "将当前笔记中的外部图片链接（网页 URL、base64）下载到 Obsidian 默认的附件目录，并自动改写笔记中的链接指向本地文件。",
-    cmdLocalizePlugin: "本地化当前笔记附件（自定义位置）",
-    cmdLocalizePluginDesc: "将当前笔记中的外部图片链接（网页 URL、base64）下载到插件管理的目录（如 _resources/笔记名/），并自动改写笔记中的链接指向本地文件。",
-    cmdBatchLocalize: "批量本地化所有笔记的附件",
-    cmdBatchLocalizeDesc: "遍历整个 vault 的所有 .md 文件，按照你设置的附件保存位置处理每篇笔记中的外部链接。适合首次安装时做历史数据迁移或定期维护。",
-    cmdClearImages: "清理库中未引用的图片（Ribbon 栏）",
-    cmdClearImagesDesc: "扫描全库所有 .md 文件的引用关系，找出未被任何笔记引用的孤立图片文件并删除或移入回收站。仅处理图片类型。此命令也是 Ribbon 按钮的默认操作。",
-    cmdClearAttachments: "清理库中未引用的附件（全库）",
-    cmdClearAttachmentsDesc: "同上逻辑，但范围更广——不仅包含图片，还清理 PDF、ZIP、MP3、MP4 等所有非图片类型的孤立附件。面向整个 vault。",
-    cmdClearOrphans: "清理当前笔记文件夹中的孤立附件（笔记旁模式）",
-    cmdClearOrphansDesc: "仅当附件保存方式为「保存在笔记旁边」且模板以 ${notename} 结尾时可用。只扫描当前笔记对应的附件子文件夹，删除其中未被引用的文件。",
   },
   en: {
-    navLocalize: "Localize",
-    navPreview: "Image Management",
     subgroupAutoTriggerTitle: "Auto Trigger",
     subgroupGlobalTitle: "Notifications",
     subgroupCleanupTitle: "Image Cleanup",
@@ -230,34 +194,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     excludedFoldersDesc:
       "Files inside these folders will not be processed automatically, and image cleanup will skip them too.",
     excludedFoldersPlaceholder: "Enter one full path per line, for example RootFolder/Subfolder",
-    configPreviewTitle: "Current configuration preview",
-    configPreviewHint: "This is calculated from the current settings and active note.",
-    previewCurrentNote: "Current note",
-    previewAttachmentDir: "Final attachment folder",
-    previewLinkExample: "Link example",
-    previewNameExample: "Naming example",
-    previewImageNameExample: "Image",
-    previewAttachmentNameExample: "Attachment",
-    previewFallbackNote: "Example/Example Note.md",
-    commandPaletteSummary: "Command palette entry descriptions",
-    cmdLocalizeObsidian: "Localize attachments for the current note (Obsidian location)",
-    cmdLocalizeObsidianDesc:
-      "Download external image links (web URLs, base64) in the current note to the Obsidian default attachment directory, and automatically rewrite links to point to local files.",
-    cmdLocalizePlugin: "Localize attachments for the current note (custom location)",
-    cmdLocalizePluginDesc:
-      "Download external image links (web URLs, base64) in the current note to a plugin-managed directory (e.g. _resources/${notename}/), and automatically rewrite links to point to local files.",
-    cmdBatchLocalize: "Localize attachments for all your notes",
-    cmdBatchLocalizeDesc:
-      "Traverse every .md file in the vault and process external links according to your configured attachment save location. Ideal for first-time setup or periodic maintenance.",
-    cmdClearImages: "Clear Unused Images in Vault (Ribbon)",
-    cmdClearImagesDesc:
-      "Scan all .md files in the vault for references and remove unreferenced orphaned image files (delete or move to trash). Only handles image types. This is also the default action of the Ribbon button.",
-    cmdClearAttachments: "Clear Unused Attachments in Vault (all types)",
-    cmdClearAttachmentsDesc:
-      "Same logic but broader scope — cleans up all non-image orphaned types as well (PDF, ZIP, MP3, MP4, etc.). Scans the entire vault.",
-    cmdClearOrphans: "Clear Unlinked Attachments in Current Note Folder (Next to Note mode)",
-    cmdClearOrphansDesc:
-      "Only available when save location is \"next to note\" and the folder template ends with ${notename}. Scans only the current note's attachment subfolder for unreferenced files.",
   },
 };
 
@@ -282,25 +218,15 @@ export default class SettingTab extends PluginSettingTab {
     }
   }
 
-  private toggleCompressionOptions(containerEl: HTMLElement, isVisible: boolean): void {
-    if (isVisible) {
-      containerEl.removeClass("is-hidden");
-      containerEl.style.display = "";
-      containerEl.style.maxHeight = containerEl.scrollHeight + "px";
-      containerEl.style.opacity = "1";
-      containerEl.style.marginTop = "";
-    } else {
-      containerEl.addClass("is-hidden");
-      containerEl.style.maxHeight = "0";
-      containerEl.style.opacity = "0";
-      containerEl.style.marginTop = "0";
-      containerEl.style.overflow = "hidden";
-      setTimeout(() => {
-        if (containerEl.hasClass("is-hidden")) {
-          containerEl.style.display = "none";
-        }
-      }, 200);
-    }
+  private applyCompressionEnabled(
+    formatSetting: Setting,
+    qualitySetting: Setting,
+    enabled: boolean
+  ): void {
+    formatSetting.setDisabled(!enabled);
+    qualitySetting.setDisabled(!enabled);
+    formatSetting.settingEl.toggleClass("is-disabled", !enabled);
+    qualitySetting.settingEl.toggleClass("is-disabled", !enabled);
   }
 
   private addSetting(
@@ -384,135 +310,6 @@ export default class SettingTab extends PluginSettingTab {
     return new SettingGroup(containerEl).setHeading(heading);
   }
 
-  private getPreviewNoteFile(): TFile {
-    const activeFile = this.plugin.app.workspace.getActiveFile();
-    if (activeFile instanceof TFile && activeFile.extension === "md") {
-      return activeFile;
-    }
-
-    return {
-      basename: "Example Note",
-      path: "Example/Example Note.md",
-      parent: { path: "Example" },
-    } as TFile;
-  }
-
-  private async buildConfigPreview(fallbackNoteLabel: string): Promise<{
-    noteLabel: string;
-    attachmentDir: string;
-    linkExample: string;
-    imageNameExample: string;
-    attachmentNameExample: string;
-  }> {
-    const noteFile = this.getPreviewNoteFile();
-    const exampleDate = new Date(2026, 4, 28, 12, 34, 56);
-    const attachmentDir = await getMDir(this.plugin.app, noteFile, this.plugin.settings);
-    const sampleImagePath = pathJoin([
-      attachmentDir,
-      generateTimestampRandomName("png", "abcdef123456_MD5", exampleDate),
-    ]);
-    const sampleLink = await getRDir(
-      noteFile,
-      this.plugin.settings,
-      sampleImagePath,
-      "https://example.com/sample.png"
-    );
-    const useMdLinks = this.plugin.app.vault.getConfig("useMarkdownLinks");
-
-    return {
-      noteLabel: noteFile.path || fallbackNoteLabel,
-      attachmentDir,
-      linkExample: useMdLinks ? `![示例](${sampleLink[1]})` : `![[${sampleLink[0]}]]`,
-      imageNameExample: generateTimestampRandomName("png", "abcdef123456_MD5", exampleDate),
-      attachmentNameExample: generateTimestampRandomName("pdf", "abcdef123456_MD5", exampleDate),
-    };
-  }
-
-  private createConfigPreview(
-    containerEl: HTMLElement,
-    t: (key: string) => string
-  ): { refresh: () => Promise<void> } {
-    const group = new SettingGroup(containerEl).setHeading(t("configPreviewTitle"));
-
-    const noteSetting = this.createSetting(group);
-    noteSetting.setName(t("previewCurrentNote")).setDesc(t("configPreviewHint"));
-    const noteDescEl = noteSetting.descEl;
-
-    const dirSetting = this.createSetting(group);
-    dirSetting.setName(t("previewAttachmentDir"));
-    const dirDescEl = dirSetting.descEl;
-
-    const linkSetting = this.createSetting(group);
-    linkSetting.setName(t("previewLinkExample"));
-    const linkDescEl = linkSetting.descEl;
-    linkDescEl.addClass("lip-config-preview-mono");
-
-    const nameSetting = this.createSetting(group);
-    nameSetting.setName(t("previewNameExample"));
-    const nameDescEl = nameSetting.descEl;
-    nameDescEl.addClass("lip-config-preview-mono");
-
-    const refresh = async () => {
-      const preview = await this.buildConfigPreview(t("previewFallbackNote"));
-      noteDescEl.setText(preview.noteLabel);
-      dirDescEl.setText(preview.attachmentDir);
-      linkDescEl.setText(preview.linkExample);
-      nameDescEl.setText(
-        `${t("previewImageNameExample")}: ${preview.imageNameExample} | ${t("previewAttachmentNameExample")}: ${preview.attachmentNameExample}`
-      );
-    };
-
-    return { refresh };
-  }
-
-  private createCommandDetails(
-    containerEl: HTMLElement,
-    summary: string,
-    commands: Array<{ name: string; desc: string }>
-  ): void {
-    const group = new SettingGroup(containerEl).setHeading(summary);
-
-    for (const command of commands) {
-      group.addSetting((setting) => {
-        setting.setName(command.name).setDesc(command.desc);
-      });
-    }
-
-    const groups = containerEl.querySelectorAll(":scope > .setting-group");
-    const groupEl = groups[groups.length - 1] as HTMLElement;
-    if (!groupEl) return;
-
-    const headingEl = groupEl.querySelector(
-      ":scope > .setting-item-heading"
-    ) as HTMLElement;
-    const itemsEl = groupEl.querySelector(
-      ":scope > .setting-items"
-    ) as HTMLElement;
-    if (!headingEl || !itemsEl) return;
-
-    groupEl.addClass("lip-collapsible");
-    itemsEl.style.display = "none";
-
-    headingEl.setAttribute("tabindex", "0");
-    headingEl.setAttribute("role", "button");
-    headingEl.setAttribute("aria-expanded", "false");
-
-    const toggle = () => {
-      const isOpen = groupEl.hasClass("is-open");
-      groupEl.toggleClass("is-open", !isOpen);
-      itemsEl.style.display = isOpen ? "none" : "";
-      headingEl.setAttribute("aria-expanded", String(!isOpen));
-    };
-
-    headingEl.addEventListener("click", toggle);
-    headingEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        toggle();
-      }
-    });
-  }
-
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
@@ -521,48 +318,9 @@ export default class SettingTab extends PluginSettingTab {
     const t = (key: string) => LOCALE_TEXT[lang][key] ?? key;
 
     containerEl.createEl("h1", { text: APP_NAME });
-    const sections: SettingsSection[] = [
-      { id: "localize", label: t("navLocalize"), icon: "panel-left" },
-      { id: "preview", label: t("navPreview"), icon: "image" },
-    ];
-
-    const navEl = containerEl.createDiv({ cls: "lip-settings-nav" });
     const contentEl = containerEl.createDiv({ cls: "lip-settings-content" });
-    const sectionEls = new Map<string, HTMLElement>();
-    const navButtons = new Map<string, HTMLButtonElement>();
-
-    const setActiveSection = (sectionId: string) => {
-      sectionEls.forEach((sectionEl, id) => {
-        sectionEl.toggleClass("is-active", id === sectionId);
-      });
-      navButtons.forEach((button, id) => {
-        button.toggleClass("is-active", id === sectionId);
-      });
-    };
-
-    sections.forEach((section, index) => {
-      const button = navEl.createEl("button", {
-        cls: "setting-item-heading lip-settings-nav-btn",
-        attr: { type: "button" },
-      });
-      const iconEl = button.createSpan({ cls: "lip-settings-nav-icon" });
-      setIcon(iconEl, section.icon);
-      button.createSpan({ text: section.label });
-      button.addEventListener("click", () => setActiveSection(section.id));
-      navButtons.set(section.id, button);
-
-      const sectionEl = contentEl.createDiv({ cls: "lip-settings-section" });
-      sectionEls.set(section.id, sectionEl);
-      if (index === 0) {
-        sectionEl.addClass("is-active");
-        button.addClass("is-active");
-      }
-    });
-
     // ===================== 图片本地化 =====================
-    const localizeEl = sectionEls.get("localize")!;
-    const configPreview = this.createConfigPreview(localizeEl, t);
-    void configPreview.refresh();
+    const localizeEl = contentEl;
 
     const updateAutoProcessSettings = () => {
       const shouldDisable = !this.plugin.settings.autoProcess;
@@ -646,7 +404,7 @@ export default class SettingTab extends PluginSettingTab {
             this.plugin.settings.attachmentSaveLocation = value;
             await this.plugin.saveSettings();
             updateAttachmentFolderSettings();
-            void configPreview.refresh();
+            
           })
       );
 
@@ -662,7 +420,7 @@ export default class SettingTab extends PluginSettingTab {
           }
           this.plugin.settings.mediaFolderPath = value;
           await this.plugin.saveSettings();
-          void configPreview.refresh();
+          
         })
       );
     mediaFolderPathSetting.settingEl.dataset.lipConditional = "attachment-folder";
@@ -675,7 +433,7 @@ export default class SettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.syncMediaFolder).onChange(async (value) => {
           this.plugin.settings.syncMediaFolder = value;
           await this.plugin.saveSettings();
-          void configPreview.refresh();
+          
         })
       );
     syncMediaFolderSetting.settingEl.dataset.lipConditional = "attachment-folder";
@@ -687,7 +445,7 @@ export default class SettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.useTimestampNaming).onChange(async (value) => {
           this.plugin.settings.useTimestampNaming = value;
           await this.plugin.saveSettings();
-          void configPreview.refresh();
+          
         })
       );
 
@@ -700,7 +458,7 @@ export default class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.useTimestampNamingForAttachments = value;
             await this.plugin.saveSettings();
-            void configPreview.refresh();
+            
           })
       );
 
@@ -711,7 +469,7 @@ export default class SettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.appendOriginalName).onChange(async (value) => {
           this.plugin.settings.appendOriginalName = value;
           await this.plugin.saveSettings();
-          void configPreview.refresh();
+          
         })
       );
 
@@ -722,7 +480,7 @@ export default class SettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.preserveCaptions).onChange(async (value) => {
           this.plugin.settings.preserveCaptions = value;
           await this.plugin.saveSettings();
-          void configPreview.refresh();
+          
         })
       );
 
@@ -738,7 +496,7 @@ export default class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.linkPathFormat = value;
             await this.plugin.saveSettings();
-            void configPreview.refresh();
+            
           })
       );
 
@@ -749,7 +507,7 @@ export default class SettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.skipObsidianFolderCreation).onChange(async (value) => {
           this.plugin.settings.skipObsidianFolderCreation = value;
           await this.plugin.saveSettings();
-          void configPreview.refresh();
+          
         })
       );
 
@@ -820,15 +578,11 @@ export default class SettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.compressImage).onChange(async (value) => {
           this.plugin.settings.compressImage = value;
           await this.plugin.saveSettings();
-          this.toggleCompressionOptions(compressionOptionsEl, value);
+          this.applyCompressionEnabled(compressionFormatSetting, compressionQualitySetting, value);
         })
       );
 
-    const compressionOptionsEl = localizeEl.createDiv({
-      cls: "lip-settings-dependent",
-    });
-
-    this.createSetting(compressionOptionsEl)
+    const compressionFormatSetting = this.createSetting(compressionGroupEl)
       .setName(t("compressionFormat"))
       .setDesc(t("compressionFormatDesc"))
       .addDropdown((dropdown) => {
@@ -842,7 +596,7 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    this.createSetting(compressionOptionsEl)
+    const compressionQualitySetting = this.createSetting(compressionGroupEl)
       .setName(t("compressionQuality"))
       .setDesc(t("compressionQualityDesc"))
       .addText((text) =>
@@ -859,33 +613,14 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    this.toggleCompressionOptions(compressionOptionsEl, this.plugin.settings.compressImage);
+    this.applyCompressionEnabled(
+      compressionFormatSetting,
+      compressionQualitySetting,
+      this.plugin.settings.compressImage
+    );
 
-    // ── 图片预览 ──
-    const previewEl = sectionEls.get("preview")!;
-    const globalGroupEl = this.createSettingGroup(previewEl, t("subgroupGlobalTitle"));
-
-    this.createSetting(globalGroupEl)
-      .setName(t("showNotifications"))
-      .setDesc(t("showNotificationsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.showNotifications).onChange(async (value) => {
-          this.plugin.settings.showNotifications = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    this.createSetting(globalGroupEl)
-      .setName(t("showOperationLogs"))
-      .setDesc(t("showOperationLogsDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.showOperationLogs).onChange(async (value) => {
-          this.plugin.settings.showOperationLogs = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    const cleanupGroupEl = this.createSettingGroup(previewEl, t("subgroupCleanupTitle"));
+    // ── 图片清理 ──
+    const cleanupGroupEl = this.createSettingGroup(localizeEl, t("subgroupCleanupTitle"));
 
     this.createSetting(cleanupGroupEl)
       .setName(t("showCleanupRibbon"))
@@ -914,7 +649,7 @@ export default class SettingTab extends PluginSettingTab {
           });
       });
 
-    const deleteWarningEl = previewEl.createDiv({
+    const deleteWarningEl = localizeEl.createDiv({
       cls: "lip-settings-danger-warning",
     });
     this.updateDeleteDangerWarning(deleteWarningEl, this.plugin.settings.deleteDestination, t);
@@ -964,15 +699,28 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    // ── 命令面板 ──
-    this.createCommandDetails(previewEl, t("commandPaletteSummary"), [
-      { name: t("cmdLocalizeObsidian"), desc: t("cmdLocalizeObsidianDesc") },
-      { name: t("cmdLocalizePlugin"), desc: t("cmdLocalizePluginDesc") },
-      { name: t("cmdBatchLocalize"), desc: t("cmdBatchLocalizeDesc") },
-      { name: t("cmdClearImages"), desc: t("cmdClearImagesDesc") },
-      { name: t("cmdClearAttachments"), desc: t("cmdClearAttachmentsDesc") },
-      { name: t("cmdClearOrphans"), desc: t("cmdClearOrphansDesc") },
-    ]);
+    // ── 通知 ──
+    const globalGroupEl = this.createSettingGroup(localizeEl, t("subgroupGlobalTitle"));
+
+    this.createSetting(globalGroupEl)
+      .setName(t("showNotifications"))
+      .setDesc(t("showNotificationsDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showNotifications).onChange(async (value) => {
+          this.plugin.settings.showNotifications = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    this.createSetting(globalGroupEl)
+      .setName(t("showOperationLogs"))
+      .setDesc(t("showOperationLogsDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showOperationLogs).onChange(async (value) => {
+          this.plugin.settings.showOperationLogs = value;
+          await this.plugin.saveSettings();
+        })
+      );
 
     updateAutoProcessSettings();
     updateAttachmentFolderSettings();
