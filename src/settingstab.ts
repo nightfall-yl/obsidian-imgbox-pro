@@ -35,7 +35,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     navPreview: "图片管理",
     subgroupAutoTriggerTitle: "自动触发",
     subgroupGlobalTitle: "通知",
-    subgroupPreviewTitle: "图片预览",
     subgroupCleanupTitle: "图片清理",
     showNotifications: "显示通知",
     showNotificationsDesc: "控制成功和状态提示是否弹出；错误提示仍会显示。",
@@ -115,13 +114,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     excludedFolders: "排除文件夹",
     excludedFoldersDesc: "这些文件夹中的文件不会被自动处理，\u201c图片清理\u201d也会跳过它们。",
     excludedFoldersPlaceholder: "每行输入一个完整路径，例如 RootFolder/Subfolder",
-    clickPreviewEnabled: "单击预览图片",
-    clickPreviewEnabledDesc:
-      "单击图片中间区域可打开可缩放的预览视图，再次单击可关闭预览。",
-    previewMobileDesc: "移动端使用 Obsidian 内置图片查看器，无需额外配置。",
-    previewAdaptiveRatio: "自适应显示比例",
-    previewAdaptiveRatioDesc: "当预览图片大于窗口时，按设定比例自适应缩放。",
-    previewAdaptiveRatioNotice: "自适应比例",
     configPreviewTitle: "当前配置预览",
     configPreviewHint: "会按当前设置和当前笔记动态计算。",
     previewCurrentNote: "当前笔记",
@@ -150,7 +142,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     navPreview: "Image Management",
     subgroupAutoTriggerTitle: "Auto Trigger",
     subgroupGlobalTitle: "Notifications",
-    subgroupPreviewTitle: "Image Preview",
     subgroupCleanupTitle: "Image Cleanup",
     showNotifications: "Show notifications",
     showNotificationsDesc: "Control whether success and status toasts appear. Errors will still show.",
@@ -239,14 +230,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     excludedFoldersDesc:
       "Files inside these folders will not be processed automatically, and image cleanup will skip them too.",
     excludedFoldersPlaceholder: "Enter one full path per line, for example RootFolder/Subfolder",
-    clickPreviewEnabled: "Click to preview image",
-    clickPreviewEnabledDesc:
-      "Click the center area of an image to open a zoomable preview, and click again to close it.",
-    previewMobileDesc: "Mobile uses the built-in Obsidian image viewer. No configuration needed.",
-    previewAdaptiveRatio: "Adaptive display ratio",
-    previewAdaptiveRatioDesc:
-      "When the preview image is larger than the window, scale it adaptively.",
-    previewAdaptiveRatioNotice: "Adaptive ratio",
     configPreviewTitle: "Current configuration preview",
     configPreviewHint: "This is calculated from the current settings and active note.",
     previewCurrentNote: "Current note",
@@ -901,38 +884,6 @@ export default class SettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         })
       );
-
-    const previewGroupEl = this.createSettingGroup(previewEl, t("subgroupPreviewTitle"));
-
-    if (Platform.isDesktop) {
-      this.createSetting(previewGroupEl)
-        .setName(t("clickPreviewEnabled"))
-        .setDesc(t("clickPreviewEnabledDesc"))
-        .addToggle((toggle) =>
-          toggle.setValue(this.plugin.settings.clickPreviewEnabled).onChange(async (value) => {
-            this.plugin.settings.clickPreviewEnabled = value;
-            await this.plugin.saveSettings();
-          })
-        );
-
-      this.createSetting(previewGroupEl)
-        .setName(t("previewAdaptiveRatio"))
-        .setDesc(t("previewAdaptiveRatioDesc"))
-        .addSlider((slider) => {
-          slider
-            .setLimits(0.1, 1, 0.05)
-            .setValue(this.plugin.settings.previewAdaptiveRatio)
-            .setDynamicTooltip()
-            .onChange(async (value) => {
-              this.plugin.settings.previewAdaptiveRatio = value;
-              new Notice(`${t("previewAdaptiveRatioNotice")}: ${value}`);
-              await this.plugin.saveSettings();
-            });
-        });
-    } else {
-      this.createSetting(previewGroupEl)
-        .setDesc(t("previewMobileDesc"));
-    }
 
     const cleanupGroupEl = this.createSettingGroup(previewEl, t("subgroupCleanupTitle"));
 

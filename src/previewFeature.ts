@@ -17,16 +17,6 @@ import {
 } from "./previewUtil";
 
 import {
-  createZoomMask,
-  createZoomedImage,
-  createZoomScaleDiv,
-  handleZoomMouseWheel,
-  handleZoomContextMenu,
-  adaptivelyDisplayImage,
-  updateZoomScaleDiv,
-} from "./previewZoom";
-
-import {
   addMenuExtendedSourceMode,
   addMenuExtendedPreviewMode,
   addExternalImageMenuPreviewMode,
@@ -157,21 +147,6 @@ export class PreviewFeature {
   }
 
 /**
-   * 检查鼠标点击是否在图片预览区域内
-   * @param target 图片元素
-   * @param evt 鼠标事件
-   * @returns 是否在预览区域内
-   */
-  private isInsidePreviewClickZone(target: HTMLImageElement, evt: MouseEvent): boolean {
-    const rect = target.getBoundingClientRect();
-    const edgeSize = Math.min(20, rect.width / 4, rect.height / 4);
-    const x = evt.clientX - rect.left;
-    const y = evt.clientY - rect.top;
-
-    return x > edgeSize && y > edgeSize && x < rect.width - edgeSize && y < rect.height - edgeSize;
-  }
-
-/**
    * 加载插件功能
    */
   async onload(): Promise<void> {
@@ -203,58 +178,6 @@ export class PreviewFeature {
         });
       })
     );
-
-    this.plugin.registerDomEvent(document, "click", async (evt: MouseEvent) => {
-      if (!this.plugin.settings.clickPreviewEnabled) {
-        return;
-      }
-
-      if (Platform.isMobile) {
-        return;
-      }
-
-      const target = evt.target as HTMLElement;
-      if (target.tagName !== "IMG") {
-        this.removeZoomedImage();
-        return;
-      }
-      if (!this.isInsidePreviewClickZone(target as HTMLImageElement, evt)) {
-        return;
-      }
-      if (document.getElementById("preview-zoomed-image")) {
-        evt.preventDefault();
-        this.removeZoomedImage();
-        return;
-      }
-      evt.preventDefault();
-      createZoomMask();
-      const { zoomedImage, originalWidth, originalHeight } = await createZoomedImage(
-        (target as HTMLImageElement).src,
-        this.plugin.settings.previewAdaptiveRatio
-      );
-      const scaleDiv = createZoomScaleDiv(zoomedImage, originalWidth, originalHeight);
-      zoomedImage.addEventListener("wheel", (e) =>
-        handleZoomMouseWheel(e, zoomedImage, originalWidth, originalHeight, scaleDiv)
-      );
-      zoomedImage.addEventListener("contextmenu", (e) =>
-        handleZoomContextMenu(e, zoomedImage, originalWidth, originalHeight, scaleDiv)
-      );
-      zoomedImage.addEventListener("dblclick", () => {
-        adaptivelyDisplayImage(
-          zoomedImage,
-          originalWidth,
-          originalHeight,
-          this.plugin.settings.previewAdaptiveRatio
-        );
-        updateZoomScaleDiv(scaleDiv, zoomedImage, originalWidth, originalHeight);
-      });
-    });
-
-    this.plugin.registerDomEvent(document, "keydown", (evt: KeyboardEvent) => {
-      if (evt.key === "Escape") {
-        this.removeZoomedImage();
-      }
-    });
 
     this.initMutationObserver();
     window.setTimeout(() => {
@@ -343,30 +266,6 @@ export class PreviewFeature {
   }
 
 /**
-   * 移除缩放的图片
-   */
-  removeZoomedImage(): void {
-    const zoomedImage = document.getElementById("preview-zoomed-image");
-    if (zoomedImage) {
-      document.body.removeChild(zoomedImage);
-    }
-    const scaleDiv = document.getElementById("preview-scale-div");
-    if (scaleDiv) {
-      document.body.removeChild(scaleDiv);
-    }
-    const mask = document.getElementById("preview-mask");
-    if (mask) {
-      document.body.removeChild(mask);
-    }
-  }
-
-
-
-
-
-
-
-/**
    * 在文件浏览器中定位文件
    * @param file 要定位的文件
    */
@@ -386,69 +285,10 @@ export class PreviewFeature {
    */
   registerDocument(doc: Document): void {
     this.plugin.register(
-      onElement(
-        doc,
-        "contextmenu" as keyof HTMLElementEventMap,
-        "img, iframe, video, div.file-embed-title, audio",
+      onElement(doc, "contextmenu" as keyof HTMLElementEventMap, "img, iframe, video, div.file-embed-title, audio",
         this.onRightClickMenu.bind(this),
         { capture: true }
       )
-    );
-
-    this.plugin.register(
-      onElement(doc, "mouseover", "img, video", (event: MouseEvent) => {
-        if (Platform.isMobile) {
-          return;
-        }
-        const currentMd = this.plugin.app.workspace.getActiveFile();
-        if (!currentMd || currentMd.name.endsWith(".canvas")) {
-          return;
-        }
-        const inPreview =
-          this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.getMode() === "preview";
-        const img = event.target as HTMLImageElement | HTMLVideoElement;
-        if (img.id === "preview-zoomed-image") {
-          return;
-        }
-
-        let lastMove = 0;
-        const mouseOverHandler = (moveEvent: MouseEvent) => {
-          if (moveEvent.buttons !== 0) {
-            return;
-          }
-          const now = Date.now();
-          if (now - lastMove < 100) {
-            return;
-          }
-          lastMove = now;
-
-          if (this.plugin.settings.clickPreviewEnabled) {
-            img.classList.add("image-ready-click-view");
-          } else {
-            img.classList.remove("image-ready-click-view");
-          }
-        };
-        this.plugin.registerDomEvent(img, "mousemove", mouseOverHandler);
-      })
-    );
-
-    this.plugin.register(
-      onElement(doc, "mouseout", "img, video", (event: MouseEvent) => {
-        if (Platform.isMobile) {
-          return;
-        }
-        const currentMd = this.plugin.app.workspace.getActiveFile();
-        if (!currentMd || currentMd.name.endsWith(".canvas")) {
-          return;
-        }
-        if (event.buttons !== 0) {
-          return;
-        }
-        const img = event.target as HTMLImageElement | HTMLVideoElement;
-        if (this.plugin.settings.clickPreviewEnabled) {
-          img.classList.remove("image-ready-click-view");
-        }
-      })
     );
 
     if (Platform.isDesktop) {
@@ -470,13 +310,12 @@ export class PreviewFeature {
     const img = event.target as HTMLImageElement;
     const inTable = img.closest("table") != null;
     const inCallout = img.closest(".callout") != null;
-    if (img.id === "preview-zoomed-image" || !img.src.startsWith("http") || event.button !== 2) {
+    if (!img.src.startsWith("http") || event.button !== 2) {
       return;
     }
 
     event.preventDefault();
     this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor?.blur();
-    img.classList.remove("image-ready-click-view");
     const menu = new Menu();
     const inPreview =
       this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.getMode() === "preview";
@@ -516,9 +355,6 @@ export class PreviewFeature {
 
     const target = getMouseEventTarget(event);
     const targetType = target.localName;
-    if (target.id === "preview-zoomed-image") {
-      return;
-    }
 
     const currentMd = this.plugin.app.workspace.getActiveFile();
     if (!currentMd) {
@@ -549,8 +385,6 @@ export class PreviewFeature {
       }
       return;
     }
-
-    target.classList.remove("image-ready-click-view");
 
     if (isExcalidraw) {
       // 从目标元素获取 Excalidraw 基础名称

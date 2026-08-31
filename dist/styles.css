@@ -84,10 +84,6 @@ button.mod-warning {
   z-index: 1001;
 }
 
-img.image-ready-click-view {
-  cursor: zoom-in;
-}
-
 .workspace-leaf-content[data-type="file-explorer"] .af-file-explorer-highlight {
   border-radius: var(--radius-s);
   background: var(--nav-item-background-active, var(--background-modifier-hover));

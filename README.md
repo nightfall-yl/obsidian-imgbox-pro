@@ -9,8 +9,7 @@
 - Image localization: download web images, handle pasted / dragged media, save base64 images
 - Attachment organization: multiple save locations, link styles, `YYYYMMDD-HHmmss-md5-first-6` naming, deduplication (images and non-image attachments can be controlled separately)
 - Attachment cleanup: unused images, unused attachments, and unlinked attachments in the current note folder
-- Image interaction (desktop): context menu, click-to-preview, navigator highlight
-- Image interaction (mobile): uses the built-in Obsidian image viewer
+- Image interaction (desktop): context menu, navigator highlight
 - Source-note jump: image navigator or image-tab context menu supports `Go to Source Note`
 - Top-navigation settings UI: `Localize / Image Management`
 - Settings page language automatically follows Obsidian's system language
@@ -86,12 +85,6 @@ Notifications:
 
 - show notifications
 - command operation log modal
-
-Image Preview:
-
-- Desktop: click-to-preview, preview ratio
-- Mobile: uses the built-in Obsidian image viewer. No configuration needed.
-- Image navigator or image-tab context menu supports `Go to Source Note`
 
 Image Cleanup:
 

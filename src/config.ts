@@ -75,10 +75,6 @@ export interface ISettings {
   excludeSubfolders: boolean;
   excludedFolders: string;
   excludedFoldersRegexp: string;
-
-  // ---- 图片预览 ----
-  clickPreviewEnabled: boolean;
-  previewAdaptiveRatio: number;
 }
 
 export const DEFAULT_SETTINGS: Partial<ISettings> = {
@@ -117,8 +113,4 @@ export const DEFAULT_SETTINGS: Partial<ISettings> = {
   excludeSubfolders: false,
   excludedFolders: "",
   excludedFoldersRegexp: "",
-
-  // 图片预览
-  clickPreviewEnabled: false,
-  previewAdaptiveRatio: 0.9,
 };
