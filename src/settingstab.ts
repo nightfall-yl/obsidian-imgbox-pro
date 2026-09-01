@@ -1,7 +1,5 @@
 import {
   App,
-  Notice,
-  Platform,
   PluginSettingTab,
   Setting,
   SettingGroup,
@@ -211,10 +209,10 @@ export default class SettingTab extends PluginSettingTab {
     t: (key: string) => string
   ): void {
     if (value === "permanent") {
-      warningEl.style.display = "flex";
+      warningEl.toggleClass("is-hidden", false);
       warningEl.setText(t("deletePermanentWarning"));
     } else {
-      warningEl.style.display = "none";
+      warningEl.toggleClass("is-hidden", true);
     }
   }
 
@@ -251,7 +249,7 @@ export default class SettingTab extends PluginSettingTab {
       createdSetting = setting;
     });
 
-    if (!createdSetting) {
+    if (createdSetting === undefined) {
       throw new Error("Failed to create setting inside SettingGroup.");
     }
 
@@ -317,7 +315,7 @@ export default class SettingTab extends PluginSettingTab {
     const lang = getObsidianLang();
     const t = (key: string) => LOCALE_TEXT[lang][key] ?? key;
 
-    containerEl.createEl("h1", { text: APP_NAME });
+    new Setting(containerEl).setName(APP_NAME).setHeading();
     const contentEl = containerEl.createDiv({ cls: "lip-settings-content" });
     // ===================== 图片本地化 =====================
     const localizeEl = contentEl;
@@ -341,7 +339,7 @@ export default class SettingTab extends PluginSettingTab {
     // ── 自动触发 ──
     const triggerGroupEl = this.createSettingGroup(localizeEl, t("subgroupAutoTriggerTitle"));
 
-    const autoProcessSetting = this.createSetting(triggerGroupEl)
+    this.createSetting(triggerGroupEl)
       .setName(t("autoProcess"))
       .setDesc(t("autoProcessDesc"))
       .addToggle((toggle) =>
@@ -391,7 +389,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    const attachmentSaveLocationSetting = this.createSetting(storageNamingGroupEl)
+    this.createSetting(storageNamingGroupEl)
       .setName(t("attachmentSaveLocation"))
       .setDesc(t("attachmentSaveLocationDesc"))
       .addDropdown((dropdown) =>
@@ -414,7 +412,7 @@ export default class SettingTab extends PluginSettingTab {
       .setClass("media_folder_set")
       .addText((text) =>
         text.setValue(this.plugin.settings.mediaFolderPath).onChange(async (value) => {
-          if (value.match(/(\)|\(|\"|\'|\#|\]|\[|\:|\>|\<|\*|\|)/g) !== null) {
+          if (value.match(/(\)|\(|"|'|#|\]|\[|: |>|<|\*|\|)/g) !== null) {
             displayError(t("unsafeFolderName"));
             return;
           }
@@ -438,7 +436,7 @@ export default class SettingTab extends PluginSettingTab {
       );
     syncMediaFolderSetting.settingEl.dataset.lipConditional = "attachment-folder";
 
-    const useTimestampNamingSetting = this.createSetting(storageNamingGroupEl)
+    this.createSetting(storageNamingGroupEl)
       .setName(t("useTimestampNaming"))
       .setDesc(t("useTimestampNamingDesc"))
       .addToggle((toggle) =>
@@ -449,7 +447,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    const useTimestampNamingForAttachmentsSetting = this.createSetting(storageNamingGroupEl)
+    this.createSetting(storageNamingGroupEl)
       .setName(t("useTimestampNamingForAttachments"))
       .setDesc(t("useTimestampNamingForAttachmentsDesc"))
       .addToggle((toggle) =>
@@ -462,7 +460,7 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    const appendOriginalNameSetting = this.createSetting(storageNamingGroupEl)
+    this.createSetting(storageNamingGroupEl)
       .setName(t("appendOriginalName"))
       .setDesc(t("appendOriginalNameDesc"))
       .addToggle((toggle) =>
@@ -473,7 +471,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    const preserveCaptionsSetting = this.createSetting(storageNamingGroupEl)
+    this.createSetting(storageNamingGroupEl)
       .setName(t("preserveCaptions"))
       .setDesc(t("preserveCaptionsDesc"))
       .addToggle((toggle) =>
@@ -484,7 +482,7 @@ export default class SettingTab extends PluginSettingTab {
         })
       );
 
-    const linkPathFormatSetting = this.createSetting(storageNamingGroupEl)
+    this.createSetting(storageNamingGroupEl)
       .setName(t("linkPathFormat"))
       .setDesc(t("linkPathFormatDesc"))
       .addDropdown((dropdown) =>
@@ -500,7 +498,7 @@ export default class SettingTab extends PluginSettingTab {
           })
       );
 
-    const skipObsidianFolderCreationSetting = this.createSetting(storageNamingGroupEl)
+    this.createSetting(storageNamingGroupEl)
       .setName(t("skipObsidianFolderCreation"))
       .setDesc(t("skipObsidianFolderCreationDesc"))
       .addToggle((toggle) =>
@@ -686,7 +684,7 @@ export default class SettingTab extends PluginSettingTab {
           });
 
         text.inputEl.rows = 5;
-        text.inputEl.style.width = "100%";
+        text.inputEl.addClass("lip-textarea-fullwidth");
       });
 
     this.createSetting(cleanupGroupEl)

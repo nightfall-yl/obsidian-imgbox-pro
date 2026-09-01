@@ -1,4 +1,52 @@
-import { App, Editor, EditorPosition, FileSystemAdapter } from "obsidian";
+import { App, Editor, EditorPosition, FileSystemAdapter, requestUrl } from "obsidian";
+
+/**
+ * Minimal structural subset of a CodeMirror 6 Line used by this plugin.
+ */
+export interface CodeMirrorLine {
+  text: string;
+  from: number;
+  to: number;
+  number: number;
+}
+
+/**
+ * Minimal structural subset of the CodeMirror 6 EditorView that this plugin
+ * relies on. Obsidian bundles CodeMirror internally and does not publish the
+ * package types to node_modules (`@codemirror/view` is not a dependency here),
+ * so importing it resolves to an unresolved "error" type (treated as `any`)
+ * that cascades into dozens of `no-unsafe-*` eslint errors. Declaring only the
+ * exact shape we touch keeps the access fully typed without an extra dependency.
+ */
+export interface CodeMirrorEditorView {
+  state: {
+    doc: {
+      lineAt(pos: number): CodeMirrorLine;
+      line(n: number): CodeMirrorLine;
+    };
+  };
+  dispatch(changes: {
+    changes: {
+      from: number;
+      to: number;
+      insert: string;
+    };
+  }): void;
+  posAtDOM(node: HTMLElement): number;
+  lineCount(): number;
+}
+
+/**
+ * Type-safe accessor for the underlying CodeMirror 6 EditorView.
+ *
+ * Obsidian's Editor does not publicly expose its CodeMirror instance; the
+ * official typed API keeps `editor.cm` private/undocumented, so accessing it
+ * directly yields an `any` chain that trips several type-safe eslint rules.
+ * We narrow the shape explicitly so the result is a typed `CodeMirrorEditorView`.
+ */
+export function getEditorView(editor: Editor): CodeMirrorEditorView | undefined {
+  return (editor as unknown as { cm?: CodeMirrorEditorView }).cm;
+}
 
 const loadImageBlobTimeout = 3000;
 
@@ -21,7 +69,7 @@ export interface AppWithDesktopInternalApi extends App {
 }
 
 export interface Listener {
-  (this: Document, ev: Event): any;
+  (this: Document, ev: Event): unknown;
 }
 
 const IMAGE_MIME_BY_EXTENSION: Record<string, string> = {
@@ -38,9 +86,9 @@ const IMAGE_MIME_BY_EXTENSION: Record<string, string> = {
 
 export function withTimeout<T>(ms: number, promise: Promise<T>): Promise<T> {
   const timeout = new Promise((resolve, reject) => {
-    const id = setTimeout(() => {
-      clearTimeout(id);
-      reject(`timed out after ${ms} ms`);
+    const id = window.setTimeout(() => {
+      window.clearTimeout(id);
+      reject(new Error(`timed out after ${ms} ms`));
     }, ms);
   });
 
@@ -73,7 +121,7 @@ export async function loadImageBlob(imgSrc: string, retryCount = 0): Promise<Blo
       image.onerror = async () => {
         if (retryCount < 3) {
           try {
-            await fetch(image.src, { mode: "no-cors" });
+            await requestUrl(image.src);
             const blob = await loadImageBlob(
               `https://api.allorigins.win/raw?url=${encodeURIComponent(imgSrc)}`,
               retryCount + 1

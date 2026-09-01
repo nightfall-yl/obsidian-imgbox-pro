@@ -53,7 +53,7 @@ const getAttachmentPathSetForVault = async (app: App): Promise<Set<string>> => {
   const resolvedLinks = app.metadataCache.resolvedLinks;
 
   if (resolvedLinks) {
-    for (const [mdFile, links] of Object.entries(resolvedLinks)) {
+    for (const links of Object.values(resolvedLinks)) {
       for (const filePath of Object.keys(links ?? {})) {
         if (!filePath.endsWith(".md")) {
           attachmentsSet.add(filePath);
@@ -95,7 +95,13 @@ const getAttachmentPathSetForVault = async (app: App): Promise<Set<string>> => {
       }
     } else if (obsFile.extension === "canvas") {
       const fileRead = await app.vault.cachedRead(obsFile);
-      const canvasData = JSON.parse(fileRead);
+      const canvasData = JSON.parse(fileRead) as {
+        nodes?: Array<{
+          type: string;
+          file?: string;
+          text?: string;
+        }>;
+      };
       if (canvasData.nodes && canvasData.nodes.length > 0) {
         for (const node of canvasData.nodes) {
           if (node.type === "file") {

@@ -36,7 +36,7 @@ export function imageTagProcessor(
     link: string,
     caption: string,
     imgsize: string
-  ) {
+  ): Promise<[string, string, string] | string | null> {
     logError("processImageTag: " + match);
     if (!isUrl(link)) {
       return match;
@@ -134,7 +134,7 @@ export function imageTagProcessor(
 
           if (settings.appendOriginalName && protocol == "file:") {
             if (!app.app.vault.getConfig("useMarkdownLinks")) {
-              shortName = "\r\n[[" + fileName + "\|" + rdir[2]["lnkurid"] + "]]\r\n";
+              shortName = "\r\n[[" + fileName + "|" + rdir[2]["lnkurid"] + "]]\r\n";
             } else {
               shortName = "\r\n[" + rdir[2]["lnkurid"] + "](" + rdir[2]["pathuri"] + ")\r\n";
             }
@@ -143,11 +143,11 @@ export function imageTagProcessor(
           if (!app.app.vault.getConfig("useMarkdownLinks")) {
             !settings.preserveCaptions || !caption.length
               ? (caption = "")
-              : (caption = "\|" + caption);
+              : (caption = "|" + caption);
 
             !settings.preserveCaptions || !imgsize.length
               ? (caption = "")
-              : (caption = "\|" + imgsize);
+              : (caption = "|" + imgsize);
 
             return [match, `![[${pathWiki}${caption}]]`, `${shortName}`];
           } else {
@@ -160,8 +160,7 @@ export function imageTagProcessor(
           return null;
         }
       } catch (error) {
-        if (error.message === "File already exists.") {
-        } else {
+        if (!(error instanceof Error) || error.message !== "File already exists.") {
           throw error;
         }
       }
@@ -181,7 +180,7 @@ export async function getRDir(
   settings: ISettings,
   fileName: string,
   link: string = undefined
-): Promise<Array<any>> {
+): Promise<[string, string, Record<string, string>]> {
   let pathWiki = "";
   let pathMd = "";
 
@@ -224,8 +223,7 @@ export async function getMDir(
   defaultdir: boolean = false,
   unique: string = ""
 ): Promise<string> {
-  const notePath = noteFile.parent.path;
-  const obsmediadir = app.vault.getConfig("attachmentFolderPath");
+  const obsmediadir = app.vault.getConfig("attachmentFolderPath") as string;
   const mediadir = settings.mediaFolderPath;
   let attdir = settings.attachmentSaveLocation;
   if (defaultdir) {
@@ -252,7 +250,7 @@ export async function getMDir(
       } else if (obsmediadir === "./") {
         root = pathJoin([noteFile.parent.path]);
       } else if (obsmediadir.match(/\.\/.+/g) !== null) {
-        root = pathJoin([noteFile.parent.path, obsmediadir.replace("\.\/", "")]);
+        root = pathJoin([noteFile.parent.path, obsmediadir.replace("./", "")]);
       } else {
         root = normalizePath(obsmediadir);
       }
@@ -272,7 +270,7 @@ async function chooseFileName(
   const parsedUrl = new URL(link);
   const ignoredExt = settings.excludedExtensions.split("|");
   let fileExt = await getFileExt(contentData, parsedUrl.pathname);
-  logError("file: " + link + " content: " + contentData + " file ext: " + fileExt, false);
+  logError("file: " + link + " content size: " + contentData.byteLength + " file ext: " + fileExt, false);
 
   if (fileExt == "unknown" && !settings.downloadUnknownTypes) {
     return { fileName: "", needWrite: false };

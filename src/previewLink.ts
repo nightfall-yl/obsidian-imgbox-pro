@@ -3,7 +3,7 @@
  */
 
 import { MarkdownView, Notice } from "obsidian";
-import { EditorView } from "@codemirror/view";
+import { getEditorView } from "./previewHelpers";
 
 /**
  * 表示一行中匹配的链接信息
@@ -33,7 +33,10 @@ export function updateInternalLink(
   inCallout: boolean
 ): void {
   const editor = activeView.editor;
-  const editorView = (editor as any).cm as EditorView;
+  const editorView = getEditorView(editor);
+  if (!editorView) {
+    return;
+  }
   const targetLine = editorView.state.doc.lineAt(targetPos);
 
   if (!inCallout && !inTable) {
@@ -83,10 +86,13 @@ export function updateExternalLink(
   inCallout: boolean
 ): void {
   const editor = activeView.editor;
-  const editorView = (editor as any).cm as EditorView;
+  const editorView = getEditorView(editor);
+  if (!editorView) {
+    return;
+  }
   const targetLine = editorView.state.doc.lineAt(targetPos);
-  const link = target.getAttribute("src") as string;
-  const altText = target.getAttribute("alt") as string;
+  const link = target.getAttribute("src");
+  const altText = target.getAttribute("alt");
 
   if (!inCallout && !inTable) {
     const matched = matchLineWithExternalLink(targetLine.text, link, altText, newWidth, inTable);
@@ -138,7 +144,10 @@ export function updateGroupedLink(
   altText?: string
 ): void {
   const editor = activeView.editor;
-  const editorView = (editor as any).cm as EditorView;
+  const editorView = getEditorView(editor);
+  if (!editorView) {
+    return;
+  }
   const matchedResults: MatchedLinkInLine[] = [];
   const matchedLines: number[] = [];
 
@@ -151,7 +160,7 @@ export function updateGroupedLink(
       ? matchLineWithInternalLink(line.text, targetName, newWidth, inTable)
       : matchLineWithExternalLink(line.text, targetName, altText ?? "", newWidth, inTable);
     matchedResults.push(...matched);
-    matchedLines.push(...new Array(matched.length).fill(i));
+    matchedLines.push(...new Array<number>(matched.length).fill(i));
   }
 
   for (let i = startLineNumber - 1; i >= 1; i--) {
@@ -163,7 +172,7 @@ export function updateGroupedLink(
       ? matchLineWithInternalLink(line.text, targetName, newWidth, inTable)
       : matchLineWithExternalLink(line.text, targetName, altText ?? "", newWidth, inTable);
     matchedResults.push(...matched);
-    matchedLines.push(...new Array(matched.length).fill(i));
+    matchedLines.push(...new Array<number>(matched.length).fill(i));
   }
 
   if (matchedResults.length === 1) {
@@ -210,8 +219,8 @@ export function matchLineWithInternalLink(
   newWidth: number,
   inTable: boolean
 ): MatchedLinkInLine[] {
-  const regWikiLink = /\!\[\[[^\[\]]*?\]\]/g;
-  const regMdLink = /\!\[[^\[\]]*?\]\(\s*[^\[\]\{\}']*\s*\)/g;
+  const regWikiLink = /!\[\[[^[\]]*?\]\]/g;
+  const regMdLink = /!\[[^[\]]*?\]\(\s*[^[\]{}']*\s*\)/g;
   const targetNameMdLink = targetName.replace(/ /g, "%20");
   if (!lineText.includes(targetName) && !lineText.includes(targetNameMdLink)) {
     return [];
@@ -268,7 +277,7 @@ export function matchLineWithInternalLink(
       }
       const linkText = matchedLink.substring(altTextMatch[0].length + 2, matchedLink.length - 1);
       let newMdLink = inTable
-        ? `![${pureAlt}\|${newWidth}](${linkText})`
+        ? `![${pureAlt}|${newWidth}](${linkText})`
         : `![${pureAlt}|${newWidth}](${linkText})`;
       if (/^\d*$/.test(altText)) {
         newMdLink = `![${newWidth}](${linkText})`;
@@ -302,7 +311,7 @@ export function matchLineWithExternalLink(
   inTable: boolean
 ): MatchedLinkInLine[] {
   const result: MatchedLinkInLine[] = [];
-  const regMdLink = /\!\[[^\[\]]*?\]\(\s*[^\[\]\{\}']*\s*\)/g;
+  const regMdLink = /!\[[^[\]]*?\]\(\s*[^[\]{}']*\s*\)/g;
   if (!lineText.includes(link)) {
     return [];
   }
@@ -325,7 +334,7 @@ export function matchLineWithExternalLink(
       }
       const linkText = matchedLink.substring(altTextMatch[0].length + 2, matchedLink.length - 1);
       const newExternalLink = inTable
-        ? `![${pureAlt}\|${newWidth}](${linkText})`
+        ? `![${pureAlt}|${newWidth}](${linkText})`
         : `![${pureAlt}|${newWidth}](${linkText})`;
 
       result.push({

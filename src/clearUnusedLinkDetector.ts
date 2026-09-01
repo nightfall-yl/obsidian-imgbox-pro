@@ -20,7 +20,7 @@ export const getAllLinkMatchesInFile = async (
   const wikiRegex = /\[\[.*?\]\]/g;
   const wikiMatches = content.match(wikiRegex);
   if (wikiMatches) {
-    const fileRegex = /(?<=\[\[).*?(?=(\]|\|))/;
+    const fileRegex = /\[\[(.*?)(?=(\]|\|))/;
 
     for (const wikiMatch of wikiMatches) {
       if (matchIsWikiTransclusion(wikiMatch)) {
@@ -39,15 +39,15 @@ export const getAllLinkMatchesInFile = async (
 
       const fileMatch = wikiMatch.match(fileRegex);
       if (fileMatch) {
-        if (fileMatch[0].startsWith("http")) {
+        if (fileMatch[1].startsWith("http")) {
           continue;
         }
 
-        const file = app.metadataCache.getFirstLinkpathDest(fileMatch[0], mdFile.path);
+        const file = app.metadataCache.getFirstLinkpathDest(fileMatch[1], mdFile.path);
         linkMatches.push({
           type: "wiki",
           match: wikiMatch,
-          linkText: file ? file.path : fileMatch[0],
+          linkText: file ? file.path : fileMatch[1],
           sourceFilePath: mdFile.path,
         });
       }
@@ -57,7 +57,7 @@ export const getAllLinkMatchesInFile = async (
   const markdownRegex = /\[(^$|.*?)\]\((.*?)\)/g;
   const markdownMatches = content.match(markdownRegex);
   if (markdownMatches) {
-    const fileRegex = /(?<=\().*(?=\))/;
+    const fileRegex = /\(([^)]*)\)$/;
 
     for (const markdownMatch of markdownMatches) {
       if (matchIsMdTransclusion(markdownMatch)) {
@@ -76,15 +76,15 @@ export const getAllLinkMatchesInFile = async (
 
       const fileMatch = markdownMatch.match(fileRegex);
       if (fileMatch) {
-        if (fileMatch[0].startsWith("http")) {
+        if (fileMatch[1].startsWith("http")) {
           continue;
         }
 
-        const file = app.metadataCache.getFirstLinkpathDest(fileMatch[0], mdFile.path);
+        const file = app.metadataCache.getFirstLinkpathDest(fileMatch[1], mdFile.path);
         linkMatches.push({
           type: "markdown",
           match: markdownMatch,
-          linkText: file ? file.path : fileMatch[0],
+          linkText: file ? file.path : fileMatch[1],
           sourceFilePath: mdFile.path,
         });
       }
@@ -95,10 +95,10 @@ export const getAllLinkMatchesInFile = async (
 };
 
 const wikiTransclusionRegex = /\[\[(.*?)#.*?\]\]/;
-const wikiTransclusionFileNameRegex = /(?<=\[\[)(.*)(?=#)/;
+const wikiTransclusionFileNameRegex = /\[\[([^#]*)#/;
 
 const mdTransclusionRegex = /\[.*?]\((.*?)#.*?\)/;
-const mdTransclusionFileNameRegex = /(?<=\]\()(.*)(?=#)/;
+const mdTransclusionFileNameRegex = /\]\(([^#]*)#/;
 
 const matchIsWikiTransclusion = (match: string): boolean => {
   return wikiTransclusionRegex.test(match);
@@ -116,7 +116,7 @@ const getTransclusionFileName = (match: string): string => {
       isWiki ? wikiTransclusionFileNameRegex : mdTransclusionFileNameRegex
     );
     if (fileNameMatch) {
-      return fileNameMatch[0];
+      return fileNameMatch[1];
     }
   }
 

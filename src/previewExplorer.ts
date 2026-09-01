@@ -69,7 +69,7 @@ export function applyFileExplorerHighlight(highlightedExplorerPath: string | nul
   candidates.forEach((element) => {
     const container = element.closest(".tree-item-self") ?? element;
     container.classList.add("af-file-explorer-highlight");
-    if (container instanceof HTMLElement) {
+    if (container?.instanceOf(HTMLElement)) {
       container.scrollIntoView({ block: "nearest" });
     }
 
@@ -110,7 +110,7 @@ export function locateFileInExplorer(
   try {
     const appWithInternalApi = plugin.app as unknown as {
       internalPlugins: {
-        getEnabledPluginById: (id: string) => { revealInFolder: (file: any) => void };
+        getEnabledPluginById: (id: string) => { revealInFolder: (file: unknown) => void };
       };
     };
     appWithInternalApi.internalPlugins

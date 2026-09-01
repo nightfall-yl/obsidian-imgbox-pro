@@ -6,7 +6,7 @@ import { isChineseDisplayLanguage } from "./previewHelpers";
 export class ModalW1 extends Modal {
   plugin: LocalImagesPlugin;
   messg: string = "";
-  callbackFunc: CallableFunction = null;
+  callbackFunc: (() => void) | (() => Promise<unknown>) = null;
 
   constructor(app: App) {
     super(app);
@@ -15,7 +15,7 @@ export class ModalW1 extends Modal {
   onOpen() {
     let { contentEl, titleEl } = this;
     titleEl.setText(APP_NAME);
-    const div = contentEl.createDiv({
+    contentEl.createDiv({
       text: this.messg,
     });
 
@@ -24,7 +24,7 @@ export class ModalW1 extends Modal {
         cls: ["mod-cta"],
         text: isChineseDisplayLanguage() ? "取消" : "Cancel",
       })
-      .addEventListener("click", async () => {
+      .addEventListener("click", () => {
         this.close();
       });
 
@@ -33,11 +33,11 @@ export class ModalW1 extends Modal {
         cls: ["mod-cta"],
         text: isChineseDisplayLanguage() ? "确认" : "Confirm",
       })
-      .addEventListener("click", async () => {
+      .addEventListener("click", () => {
         this.close();
 
         if (this.callbackFunc) {
-          this.callbackFunc();
+          void this.callbackFunc();
         }
       });
   }
@@ -59,7 +59,7 @@ export class ModalW2 extends Modal {
   onOpen() {
     let { contentEl, titleEl } = this;
     titleEl.setText(APP_NAME);
-    const div = contentEl.createDiv({
+    contentEl.createDiv({
       text: this.messg,
     });
 
@@ -68,7 +68,7 @@ export class ModalW2 extends Modal {
         cls: ["mod-cta"],
         text: isChineseDisplayLanguage() ? "确定" : "OK",
       })
-      .addEventListener("click", async () => {
+      .addEventListener("click", () => {
         this.close();
       });
   }

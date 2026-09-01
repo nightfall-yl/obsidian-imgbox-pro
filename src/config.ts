@@ -9,24 +9,24 @@ export const USER_AGENT =
 
 export const HTML_EMBED =
   //html embedded image
-  /(?<htmlem>\[{0,1}\<img.+?(?<src>src=.+?)\>)/gm;
+  /(?<htmlem>\[{0,1}<img.+?(?<src>src=.+?)>)/gm;
 
 export const ANCHOR_S = /(?<anchor>.+)\|(?<size>[0-9]+)/g;
 
 export const MD_SEARCH_PATTERN = [
   //file link
-  /\!\[(?<anchor>(.{0}|(?!^file\:\/)+?))\]\((?<link>((file\:\/)[^\!]+?(\.{1}.{3,4}\) {0,1}|\)$|\)\n|\)])))/gm,
+  /!\[(?<anchor>(.{0}|(?!^file:\/)+?))\]\((?<link>((file:\/)[^!]+?(\.{1}.{3,4}\) {0,1}|\)$|\)\n|\)])))/gm,
   //hypertext link
   ///\!\[(?<anchor>(.{0}|[^\[]+?))\]\((?<link>((http(s){0,1}).+?(\) |\..{3,4}\)|\)$|\)\n|\)\]|\)\[)))/gm,
 
-  /\!\[(?<anchor>([^\]]*))\]\((?<link>((http(s){0,1}).+?(\) |\..{3,4}\)|\)$|\)\n|\)\]|\)\[)))/gm,
+  /!\[(?<anchor>([^\]]*))\]\((?<link>((http(s){0,1}).+?(\) |\..{3,4}\)|\)$|\)\n|\)\]|\)\[)))/gm,
 
   //Base64 encoded data
-  /\!\[[^\[](?<anchor>(.{0}|[^\[]+?))\]\((?<link>((data\:.+?base64\,).+?(\) |\..{3,4}\)|\)$|\)\n|\)\]|\)\[)))/gm,
-  /\!\[(?<anchor>(.{0}|[^\[]+?))\]\((?<link>((http(s){0,1}|(data\:.+?base64\,)).+?\)))/gm,
+  /!\[[^[](?<anchor>(.{0}|[^[]+?))\]\((?<link>((data:.+?base64,).+?(\) |\..{3,4}\)|\)$|\)\n|\)\]|\)\[)))/gm,
+  /!\[(?<anchor>(.{0}|[^[]+?))\]\((?<link>((http(s){0,1}|(data:.+?base64,)).+?\)))/gm,
 ];
 
-export const MD_LINK = /\http(s){0,1}.+?( {1}|\)\n)/g;
+export const MD_LINK = /http(s){0,1}.+?( {1}|\)\n)/g;
 
 export const ANY_URL_PATTERN =
   /[a-zA-Z\d]+:\/\/(\w+:\w+@)?([a-zA-Z\d.-]+\.[A-Za-z]{2,4})(:\d+)?(\/.*)?/i;

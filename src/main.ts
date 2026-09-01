@@ -5,6 +5,7 @@ import {
   Editor,
   htmlToMarkdown,
   MarkdownView,
+  MarkdownFileInfo,
   TFolder,
   EmbedCache,
 } from "obsidian";
@@ -35,7 +36,6 @@ import {
 
 import {
   APP_NAME,
-  APP_TITLE,
   ISettings,
   DEFAULT_SETTINGS,
   MD_SEARCH_PATTERN,
@@ -267,7 +267,7 @@ export default class LocalImagesPlugin extends Plugin {
         ? "清理当前笔记文件夹中的孤立附件（笔记旁模式）"
         : "Clear Unlinked Attachments in Current Note Folder (Next to Note mode)",
       callback: () => {
-        this.removeOrphans("plugin")();
+        void this.removeOrphans("plugin")();
       },
     });
 
@@ -276,9 +276,9 @@ export default class LocalImagesPlugin extends Plugin {
         logError("New file created: " + file.path);
 
         if (this.ExemplaryOfMD(file.path) && !this.ThePathExcluded(String(file.parent?.path))) {
-          this.onMdCreateFunc(file);
+          void this.onMdCreateFunc(file);
         } else {
-          this.onFCreateFunc(file);
+          void this.onFCreateFunc(file);
         }
       })
     );
@@ -307,7 +307,7 @@ export default class LocalImagesPlugin extends Plugin {
 
           try {
             if (this.app.vault.getAbstractFileByPath(rootdir) instanceof TFolder) {
-              this.app.vault.trash(this.app.vault.getAbstractFileByPath(rootdir), useSysTrash);
+              void this.app.vault.trash(this.app.vault.getAbstractFileByPath(rootdir), useSysTrash);
               showStatusBalloon(
                 isChineseDisplayLanguage()
                   ? `附件文件夹 ${rootdir} 已移入回收站。`
@@ -373,7 +373,7 @@ export default class LocalImagesPlugin extends Plugin {
           content = content
             .replaceAll(`](${encodeURI(oldRootdir)}`, `](${encodeURI(newRootDir)})`)
             .replaceAll(`[${oldRootdir}`, `[${newRootDir}]`);
-          this.app.vault.modify(file, content);
+          void this.app.vault.modify(file, content);
         }
       })
     );
@@ -403,9 +403,12 @@ export default class LocalImagesPlugin extends Plugin {
     );
 
     this.registerEvent(
-      this.app.workspace.on("editor-paste", (evt: ClipboardEvent, editor: Editor, info: MarkdownView) => {
-        this.onPasteFunc(evt, editor, info);
-      })
+      this.app.workspace.on("editor-paste", (evt, editor, info) => {
+      if (evt.defaultPrevented) {
+        return;
+      }
+      void this.onPasteFunc(evt, editor, info);
+    })
     );
 
     this.setupQueueInterval();
@@ -422,7 +425,7 @@ export default class LocalImagesPlugin extends Plugin {
       const ribbonTitle = displayLang.startsWith("zh") ? "清理未使用图片" : "Clear unused images";
 
       this.clearUnusedRibbonIconEl = this.addRibbonIcon("image-file", ribbonTitle, () => {
-        this.clearUnusedAttachments("image");
+        void this.clearUnusedAttachments("image");
       });
     }
   };
@@ -535,7 +538,9 @@ export default class LocalImagesPlugin extends Plugin {
     }
     if (this.settings.autoProcess && this.settings.autoProcessInterval > 0) {
       this.intervalId = window.setInterval(
-        this.processModifiedQueue,
+        () => {
+          void this.processModifiedQueue();
+        },
         this.settings.autoProcessInterval * 1000
       );
       this.registerInterval(this.intervalId);
@@ -546,7 +551,7 @@ export default class LocalImagesPlugin extends Plugin {
     try {
       const noteFile = this.app.workspace.getActiveViewOfType(MarkdownView)?.file ?? null;
       return noteFile;
-    } catch (e) {
+    } catch {
       showBalloon(
         isChineseDisplayLanguage() ? "无法获取当前笔记！" : "Cannot get current note! ",
         true
@@ -559,7 +564,7 @@ export default class LocalImagesPlugin extends Plugin {
     file: TFile,
     defaultdir: boolean = false,
     options: { notifyWhenUnchanged?: boolean } = {}
-  ): Promise<any> {
+  ): Promise<unknown> {
     if (file == null) {
       return null;
     }
@@ -622,7 +627,7 @@ export default class LocalImagesPlugin extends Plugin {
       try {
         const activeFile = this.getCurrentNote();
         await this.processPage(activeFile, defaultdir);
-      } catch (e) {
+      } catch {
         showBalloon(
           `Please select a note or click inside selected note in canvas.`,
           true
@@ -636,47 +641,41 @@ export default class LocalImagesPlugin extends Plugin {
 
     const pagesCount = files.length;
 
-    const notice = true
-      ? new Notice(
+    const notice = new Notice(
           APP_NAME +
             (isChineseDisplayLanguage()
               ? `\n开始处理。共 ${pagesCount} 页。`
               : `\nStart processing. Total ${pagesCount} pages. `),
           TIMEOUT_LIKE_INFINITY
-        )
-      : null;
+        );
 
     for (const [index, file] of files.entries()) {
       if (this.ExemplaryOfMD(file.path)) {
-        if (notice) {
-          (notice as any).setMessage(
-            APP_NAME +
-              (isChineseDisplayLanguage()
-                ? `\n正在处理\n"${file.path}"\n第 ${index + 1}/${pagesCount} 页`
-                : `\nProcessing \n"${file.path}" \nPage ${index} of ${pagesCount}`)
-          );
-        }
+        notice.setMessage(
+          APP_NAME +
+            (isChineseDisplayLanguage()
+              ? `\n正在处理\n"${file.path}"\n第 ${index + 1}/${pagesCount} 页`
+              : `\nProcessing \n"${file.path}" \nPage ${index} of ${pagesCount}`)
+        );
         await this.processPage(file);
       }
     }
-    if (notice) {
-      (notice as any).setMessage(
-        APP_NAME +
-          (isChineseDisplayLanguage()
-            ? `\n${pagesCount} 页处理完毕。`
-            : `\n${pagesCount} pages were processed.`)
-      );
+    notice.setMessage(
+      APP_NAME +
+        (isChineseDisplayLanguage()
+          ? `\n${pagesCount} 页处理完毕。`
+          : `\n${pagesCount} pages were processed.`)
+    );
 
-      setTimeout(() => {
-        notice.hide();
-      }, NOTICE_TIMEOUT);
-    }
+    window.setTimeout(() => {
+      notice.hide();
+    }, NOTICE_TIMEOUT);
   };
 
   private async onPasteFunc(
     evt: ClipboardEvent = undefined,
     editor: Editor = undefined,
-    info: MarkdownView = undefined
+    info: MarkdownView | MarkdownFileInfo = undefined
   ) {
     if (evt === undefined) {
       return;
@@ -704,8 +703,8 @@ export default class LocalImagesPlugin extends Plugin {
         return;
       }
 
-      for (const key in tItems) {
-        if (tItems[key].kind == "string") {
+      for (const item of Array.from(tItems)) {
+        if (item.kind == "string") {
           if (this.settings.autoProcess) {
             const cont =
               htmlToMarkdown(evt.clipboardData.getData("text/html")) +
@@ -730,7 +729,7 @@ export default class LocalImagesPlugin extends Plugin {
           return;
         }
       }
-    } catch (e) {
+    } catch {
       showBalloon(
         isChineseDisplayLanguage()
           ? "请选择一篇笔记，或在画布中的笔记内点击。"
@@ -780,7 +779,7 @@ export default class LocalImagesPlugin extends Plugin {
 
         if (this.ExemplaryOfMD(noteFile.path)) {
           oldRootdir = oldRootdir.replace("${notename}", pathParse(noteFile.path)?.name);
-          oldRootdir = trimAny(pathJoin([pathParse(noteFile.path)?.dir, oldRootdir]), ["\/"]);
+          oldRootdir = trimAny(pathJoin([pathParse(noteFile.path)?.dir, oldRootdir]), ["/"]);
           if (!(await this.app.vault.exists(oldRootdir))) {
             showBalloon(
               isChineseDisplayLanguage()
@@ -790,7 +789,7 @@ export default class LocalImagesPlugin extends Plugin {
             );
             return;
           }
-          const allAttachments = await this.app.vault.getAbstractFileByPath(oldRootdir)?.children;
+          const allAttachments = this.app.vault.getAbstractFileByPath(oldRootdir)?.children;
           const referencedAttachmentNames = await this.getCurrentNoteAttachmentBaseNames(noteFile);
           if (allAttachments) {
             for (const attach of allAttachments) {
@@ -834,7 +833,7 @@ export default class LocalImagesPlugin extends Plugin {
           filesToRemove.forEach((el: TFile) => {
             if (deletePermanently) {
               msg = isChinese ? "已永久删除。" : "were deleted completely.";
-              this.app.vault.delete(el, true);
+              void this.app.vault.delete(el, true);
             } else {
               if (useSysTrash) {
                 msg = isChinese ? "已移动到系统回收站。" : "were moved to the system garbage can.";
@@ -843,7 +842,7 @@ export default class LocalImagesPlugin extends Plugin {
                   ? "已移动到 Obsidian 回收站。"
                   : "were moved to the Obsidian garbage can.";
               }
-              this.app.vault.trash(el, useSysTrash);
+              void this.app.vault.trash(el, useSysTrash);
             }
           });
         }
@@ -945,17 +944,16 @@ export default class LocalImagesPlugin extends Plugin {
   }
 
   private processMdFilesOnTimer = async () => {
-    const th = this;
-    function onRet() {
-      th.newfCreated = [];
-      th.newfCreatedByDownloader = [];
-      th.noteModified = [];
-      th.newfMoveReq = false;
-      th.pendingPastedMarkdownFile = null;
-      th.pendingPastedMarkdownTime = 0;
-      window.clearInterval(th.newfProcInt);
-      th.newfProcInt = 0;
-    }
+    const onRet = () => {
+      this.newfCreated = [];
+      this.newfCreatedByDownloader = [];
+      this.noteModified = [];
+      this.newfMoveReq = false;
+      this.pendingPastedMarkdownFile = null;
+      this.pendingPastedMarkdownTime = 0;
+      window.clearInterval(this.newfProcInt);
+      this.newfProcInt = 0;
+    };
 
     logError("func processMdFilesOnTimer:\r\n");
     logError(this.noteModified, true);
@@ -985,7 +983,7 @@ export default class LocalImagesPlugin extends Plugin {
 
         if (obsmdir != "" && !(await this.app.vault.adapter.exists(obsmdir))) {
           if (!this.settings.skipObsidianFolderCreation) {
-            this.ensureFolderExists(obsmdir);
+            void this.ensureFolderExists(obsmdir);
             showStatusBalloon(
               "You obsidian media folder set to '" +
                 obsmdir +
@@ -1021,7 +1019,7 @@ export default class LocalImagesPlugin extends Plugin {
               }
 
               let newpath = pathJoin([mdir, cFileName(pathBasename(el.link))]);
-              let newlink: Array<string> = await getRDir(note, this.settings, newpath);
+              let newlink: [string, string, Record<string, string>] = await getRDir(note, this.settings, newpath);
 
               logError(el.link);
 
@@ -1031,7 +1029,7 @@ export default class LocalImagesPlugin extends Plugin {
               const oldMD5 = md5Sig(oldBinData);
               const fileExt = await getFileExt(oldBinData, oldpath);
 
-              logError("oldbindata: " + oldBinData);
+              logError("oldbindata size: " + oldBinData.byteLength);
               logError("oldext: " + fileExt);
 
               if (this.settings.compressImage && fileExt == "png") {
@@ -1178,7 +1176,9 @@ export default class LocalImagesPlugin extends Plugin {
     window.clearInterval(this.newfProcInt);
     this.newfProcInt = 0;
     this.newfProcInt = window.setInterval(
-      this.processMdFilesOnTimer,
+      () => {
+        void this.processMdFilesOnTimer();
+      },
       this.settings.autoProcessInterval * 1000
     );
     this.registerInterval(this.newfProcInt);
@@ -1187,7 +1187,7 @@ export default class LocalImagesPlugin extends Plugin {
   processModifiedQueue = async () => {
     const iteration = this.modifiedQueue.iterationQueue();
     for (const page of iteration) {
-      this.processPage(page, false, { notifyWhenUnchanged: false });
+      void this.processPage(page, false, { notifyWhenUnchanged: false });
     }
   };
 
@@ -1198,13 +1198,13 @@ export default class LocalImagesPlugin extends Plugin {
     );
   }
 
-  async onunload() {
+  onunload() {
     this.previewFeature?.onunload();
     logError(" unloaded.");
   }
 
   async loadSettings() {
-    const savedSettings = (await this.loadData()) ?? {};
+    const savedSettings = ((await this.loadData()) ?? {}) as ISettings;
     const migratedSettings = { ...savedSettings };
 
     this.settings = Object.assign({}, DEFAULT_SETTINGS, migratedSettings);
@@ -1215,7 +1215,11 @@ export default class LocalImagesPlugin extends Plugin {
     try {
       await this.saveData(this.settings);
     } catch (error) {
-      displayError(error);
+      if (error instanceof Error) {
+        displayError(error);
+      } else {
+        displayError(String(error));
+      }
     }
   }
 

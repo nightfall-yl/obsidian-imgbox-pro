@@ -1,20 +1,11 @@
-import { Editor, MarkdownView, Menu, MenuItem, Notice, Platform, TFile } from "obsidian";
-import { EditorView } from "@codemirror/view";
+import { MarkdownView, Menu, MenuItem, Notice, Platform, TFile } from "obsidian";
 import LocalImagesPlugin from "./main";
 import {
-  getImageMimeTypeFromExtension,
-  loadImageBlob,
-  normalizeImageBlobForClipboard,
   onElement,
   isChineseDisplayLanguage,
+  getEditorView,
 } from "./previewHelpers";
 import { getMouseEventTarget } from "./previewEvent";
-
-import {
-  deleteCurTargetLink,
-  handlerDelFileNew,
-  handlerRenameFile,
-} from "./previewUtil";
 
 import {
   addMenuExtendedSourceMode,
@@ -25,9 +16,8 @@ import {
 } from "./previewMenu";
 
 import {
-  clearFileExplorerHighlight,
-  clearNativeFileExplorerActiveState,
   applyFileExplorerHighlight,
+  clearFileExplorerHighlight,
   locateFileInExplorer,
 } from "./previewExplorer";
 import { VideoDivWidthChangeWatcher } from "./previewVideoWatcher";
@@ -69,7 +59,7 @@ export class PreviewFeature {
   private getReferencingMarkdownNotes(file: TFile): TFile[] {
     const cacheKey = file.path;
     if (this.referencedNotesCache.has(cacheKey)) {
-      return this.referencedNotesCache.get(cacheKey)!;
+      return this.referencedNotesCache.get(cacheKey);
     }
 
     const refs: TFile[] = [];
@@ -211,8 +201,7 @@ export class PreviewFeature {
     );
   }
 
-/**
-  onunload(): void {
+onunload(): void {
     this.observer?.disconnect();
     this.videoWidthWatcher?.disconnect();
     if (this.explorerHighlightSuppressTimer !== null) {
@@ -239,10 +228,10 @@ export class PreviewFeature {
           continue;
         }
         mutation.addedNodes.forEach((node) => {
-          if (!(node instanceof Element)) {
+          if (!(node.instanceOf(Element))) {
             return;
           }
-          
+
           // 只处理包含视频或导航文件夹的节点，提高性能
           if (node.querySelector("video") || node.classList.contains("nav-folder")) {
             // 处理视频宽度同步
@@ -285,15 +274,15 @@ export class PreviewFeature {
    */
   registerDocument(doc: Document): void {
     this.plugin.register(
-      onElement(doc, "contextmenu" as keyof HTMLElementEventMap, "img, iframe, video, div.file-embed-title, audio",
-        this.onRightClickMenu.bind(this),
+      onElement(doc, "contextmenu", "img, iframe, video, div.file-embed-title, audio",
+        (event) => this.onRightClickMenu(event as MouseEvent),
         { capture: true }
       )
     );
 
     if (Platform.isDesktop) {
       this.plugin.register(
-        onElement(doc, "mousedown", "img", this.externalImageContextMenuCall.bind(this))
+        onElement(doc, "mousedown", "img", (event) => this.externalImageContextMenuCall(event as MouseEvent))
       );
     }
   }
@@ -373,7 +362,7 @@ export class PreviewFeature {
       this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.getMode() === "preview";
     const isExcalidraw = target.classList.contains("excalidraw-embedded-img");
 
-    let targetName = target.getAttribute("src") as string;
+    let targetName = target.getAttribute("src");
     
     if (targetName && targetName.startsWith("http")) {
       return;
@@ -388,10 +377,10 @@ export class PreviewFeature {
 
     if (isExcalidraw) {
       // 从目标元素获取 Excalidraw 基础名称
-      let excalidrawTargetName = target.getAttribute("filesource") as string;
+      let excalidrawTargetName = target.getAttribute("filesource");
       targetName = this.extractExcalidrawBaseName(excalidrawTargetName);
     } else {
-      targetName = (target.closest(".internal-embed")?.getAttribute("src") as string)?.replace(
+      targetName = (target.closest(".internal-embed")?.getAttribute("src"))?.replace(
         /^(\.\.\/)+/g,
         ""
       );
@@ -413,7 +402,7 @@ export class PreviewFeature {
     } else {
       const editor = this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
       // 使用更安全的类型检查
-      const editorView = (editor as { cm?: EditorView })?.cm;
+      const editorView = editor ? getEditorView(editor) : undefined;
       if (!editorView) {
         return;
       }
@@ -432,7 +421,7 @@ export class PreviewFeature {
 
     registerEscapeButton(menu);
 
-    const isLinux = navigator.userAgent.toLowerCase().includes("linux");
+    const isLinux = Platform.isLinux;
     let offset = isLinux ? -138 : -163;
     if (inTable && !inPreview) {
       menu.showAtPosition({ x: event.pageX, y: event.pageY + offset });

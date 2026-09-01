@@ -26,7 +26,7 @@ export class VideoDivWidthChangeWatcher {
         const video = target.querySelector("video");
         const width = target.getAttribute("width");
         if (video && width) {
-          (video as HTMLVideoElement).style.width = `${width}px`;
+          (video).style.width = `${width}px`;
         }
       }
     }

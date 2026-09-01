@@ -13,7 +13,7 @@ import { isChineseDisplayLanguage } from "./previewHelpers";
 
 import { requestUrl, Notice, TFile } from "obsidian";
 
-export async function showBalloon(str: string, show: boolean = true, timeout = NOTICE_TIMEOUT) {
+export function showBalloon(str: string, show: boolean = true, timeout = NOTICE_TIMEOUT) {
   if (show) {
     new Notice(APP_NAME + "\r\n" + str, timeout);
   }
@@ -41,12 +41,12 @@ export function displayError(error: Error | string, file?: TFile): void {
   logError(`LocalImagesPlus: error: ${error}`, false);
 }
 
-export async function logError(_str: any, _isObj: boolean = false) {
+export function logError(_str: unknown, _isObj: boolean = false) {
 }
 
 export function md5Sig(contentData: ArrayBuffer = undefined) {
   try {
-    var dec = new TextDecoder("utf-8");
+    let dec = new TextDecoder("utf-8");
     const arrMid = Math.round(contentData.byteLength / 2);
     const chunk = 15000;
     const signature = md5(
@@ -90,51 +90,60 @@ export function generateTimestampRandomName(
   return `${year}${month}${day}-${hours}${minutes}${seconds}-${suffix}${normalizedExtension}`;
 }
 
-export async function replaceAsync(str: any, regex: Array<RegExp>, asyncFn: any) {
+export async function replaceAsync(
+  str: string,
+  regex: Array<RegExp>,
+  asyncFn: (
+    key: string,
+    anchor: string,
+    link: string,
+    caption: string,
+    imgsize: string
+  ) => Promise<[string, string, string] | null | string>
+): Promise<[string, boolean, Array<string>]> {
   logError("replaceAsync: \r\nstr: " + str + "\r\nregex: ");
   logError(regex, true);
 
   let errorflag = false;
-  const promises: Promise<any>[] = [];
-  let dictPatt: Array<any>[] = [];
-  let link;
-  let anchor;
-  let replp: any;
+  const promises: Promise<[string, string, string] | null | string>[] = [];
+  const dictPatt: Record<string, [string, string, string, string]> = {};
   let caption = "";
   let filesArr: Array<string> = [];
-  let AttSize = "";
 
   regex.forEach((element) => {
     logError("cur regex:  " + element);
     const matches = str.matchAll(element);
 
     for (const match of matches) {
-      logError("match: " + match);
+      logError("match: " + String(match));
+      const groups: Record<string, string> = match.groups ?? {};
 
-      anchor = trimAny(match.groups.anchor, [")", "(", "]", "[", " "]);
+      const anchor = trimAny(groups.anchor ?? "", [")", "(", "]", "[", " "]);
 
-      const AttSizeMatch = anchor.matchAll(ATT_SIZE_ACHOR);
-
-      for (const match of AttSizeMatch) {
-        AttSize =
-          match.groups.attsize !== undefined
-            ? trimAny(match.groups.attsize, [")", "(", "]", "[", " "])
-            : match.groups.attsize2 !== undefined
-              ? trimAny(match.groups.attsize2, [")", "(", "]", "[", " "])
+      let attSize = "";
+      const attSizeMatches = anchor.matchAll(ATT_SIZE_ACHOR);
+      for (const am of attSizeMatches) {
+        const ag: Record<string, string> = am.groups ?? {};
+        attSize =
+          ag.attsize !== undefined
+            ? trimAny(ag.attsize, [")", "(", "]", "[", " "])
+            : ag.attsize2 !== undefined
+              ? trimAny(ag.attsize2, [")", "(", "]", "[", " "])
               : "";
       }
 
-      link = (match.groups.link.match(MD_LINK) ?? [match.groups.link])[0];
+      const lnk = groups.link ?? "";
+      const mdLinkMatch = lnk.match(MD_LINK);
+      const linkMatch = mdLinkMatch ?? [lnk];
+      let link = linkMatch[0] ?? lnk;
       caption = trimAny(
-        match.groups.link.match(MD_LINK) !== null
-          ? match.groups.link.split(link).length > 1
-            ? match.groups.link.split(link)[1]
-            : ""
+        mdLinkMatch !== null && lnk.split(link).length > 1
+          ? lnk.split(link)[1]
           : "",
         [")", "]", "(", "[", " "]
       );
       link = trimAny(link, [")", "(", "]", "[", " "]);
-      replp = trimAny(match[0], ["[", "(", "]"]);
+      const replp = trimAny(match[0], ["[", "(", "]", "]"  ]);
 
       logError(
         "repl: " +
@@ -146,21 +155,16 @@ export async function replaceAsync(str: any, regex: Array<RegExp>, asyncFn: any)
           "\r\ncaption: " +
           caption +
           "\r\nAttSize: " +
-          AttSize
+          attSize
       );
 
-      dictPatt[replp] = [anchor, link, caption, AttSize];
+      dictPatt[replp] = [anchor, link, caption, attSize];
     }
   });
 
-  for (var key in dictPatt) {
-    const promise = asyncFn(
-      key,
-      dictPatt[key][0],
-      dictPatt[key][1],
-      dictPatt[key][2],
-      dictPatt[key][3]
-    );
+  for (const key of Object.keys(dictPatt)) {
+    const entry = dictPatt[key];
+    const promise = asyncFn(key, entry[0], entry[1], entry[2], entry[3]);
     logError(promise, true);
     promises.push(promise);
   }
@@ -182,11 +186,12 @@ export async function replaceAsync(str: any, regex: Array<RegExp>, asyncFn: any)
   return [str, errorflag, filesArr];
 }
 
+
 export function isUrl(link: string) {
   logError("IsUrl: " + link, false);
   try {
     return Boolean(new URL(link));
-  } catch (_) {
+  } catch {
     return false;
   }
 }
@@ -351,12 +356,12 @@ export function trimAny(str: string, chars: Array<string>) {
 }
 
 export function cFileName(name: string) {
-  const cleanedName = name.replace(/(\)|\(|\"|\'|\#|\]|\[|\:|\>|\<|\*|\|)/g, " ");
+  const cleanedName = name.replace(/(\)|\(|"|'|#|\]|\[|: |>|<|\*|\|)/g, " ");
   return cleanedName;
 }
 
 export function cleanFileName(name: string) {
-  const cleanedName = filenamify(name).replace(FORBIDDEN_SYMBOLS_FILENAME_PATTERN, "_");
+  const cleanedName = String(filenamify(name)).replace(FORBIDDEN_SYMBOLS_FILENAME_PATTERN, "_");
   return cleanedName;
 }
 
@@ -415,7 +420,7 @@ export function pathRelative(from: string, to: string): string {
   }
 
   const upCount = fromParts.length - commonLength;
-  const upParts = Array(upCount).fill("..");
+  const upParts = Array<string>(upCount).fill("..");
   const downParts = toParts.slice(commonLength);
 
   return [...upParts, ...downParts].join("/") || ".";
@@ -433,10 +438,31 @@ export function normalizePath(p: string) {
   return p.replace(/\\/g, "/");
 }
 
+// Encodes backslash, space and a subset of ASCII control characters (NUL,
+// backspace, vertical tab, form feed, and \x0e-\x1f) that should be URI-encoded.
+// Done character-by-character so no control-character escapes appear inside a
+// RegExp pattern, which `no-control-regex` forbids.
 export function encObsURI(e: string) {
-  return e.replace(/[\\\x00\x08\x0B\x0C\x0E-\x1F ]/g, function (e) {
-    return encodeURIComponent(e);
-  });
+  let result = "";
+  for (const char of e) {
+    const code = char.charCodeAt(0);
+
+    if (
+      code === 0x00 ||
+      code === 0x08 ||
+      code === 0x0b ||
+      code === 0x0c ||
+      (code >= 0x0e && code <= 0x1f) ||
+      code === 0x20 ||
+      code === 0x5c
+    ) {
+      result += encodeURIComponent(char);
+    } else {
+      result += char;
+    }
+  }
+
+  return result;
 }
 
 export async function blobToJpegArrayBuffer(

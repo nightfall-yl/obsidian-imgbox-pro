@@ -14,16 +14,16 @@ export class ClearUnusedLogsModal extends Modal {
   onOpen() {
     const { contentEl } = this;
 
-    const headerWrapper = contentEl.createEl("div");
+    const headerWrapper = contentEl.createDiv();
     headerWrapper.addClass("unused-images-center-wrapper");
     const headerEl = headerWrapper.createEl("h1", { text: this.title });
     headerEl.addClass("modal-title");
 
-    const logs = contentEl.createEl("div");
+    const logs = contentEl.createDiv();
     logs.addClass("unused-images-logs");
     logs.innerHTML = this.textToView;
 
-    const buttonWrapper = contentEl.createEl("div");
+    const buttonWrapper = contentEl.createDiv();
     buttonWrapper.addClass("unused-images-center-wrapper");
     const closeButton = buttonWrapper.createEl("button", {
       text: isChineseDisplayLanguage() ? "关闭" : "Close",
@@ -52,7 +52,7 @@ export class ClearUnusedPreviewModal extends Modal {
   onOpen() {
     const { contentEl } = this;
 
-    const headerWrapper = contentEl.createEl("div");
+    const headerWrapper = contentEl.createDiv();
     headerWrapper.addClass("unused-images-center-wrapper");
     const headerEl = headerWrapper.createEl("h1", { text: this.title });
     headerEl.addClass("modal-title");
@@ -104,9 +104,9 @@ export class ClearUnusedPreviewModal extends Modal {
     confirmButton.addClass("mod-cta");
     confirmButton.addClass("unused-images-button");
     confirmButton.addClass("mod-warning");
-    confirmButton.addEventListener("click", async () => {
+    confirmButton.addEventListener("click", () => {
       this.close();
-      await this.onConfirm();
+      void this.onConfirm();
     });
   }
 }

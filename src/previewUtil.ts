@@ -1,5 +1,5 @@
-import { App, Modal, Notice, Setting, TFile, TFolder, MarkdownView } from "obsidian";
-import { EditorView } from "@codemirror/view";
+import { App, Modal, Notice, Setting, TFile, TFolder, TAbstractFile, MarkdownView } from "obsidian";
+import { getEditorView } from "./previewHelpers";
 import { ISettings } from "./config";
 
 export interface PreviewHost {
@@ -63,7 +63,7 @@ export const getFileByBaseName = (
   }
 };
 
-export const getFileParentFolder = (file: TFile): TFolder | undefined => {
+export const getFileParentFolder = (file: TAbstractFile): TFolder | undefined => {
   if (file.parent instanceof TFolder) {
     return file.parent;
   }
@@ -160,7 +160,10 @@ export const deleteCurTargetLink = (
     return;
   }
 
-  const editorView = (editor as any).cm as EditorView;
+  const editorView = getEditorView(editor);
+  if (!editorView) {
+    return;
+  }
   const targetLine = editorView.state.doc.lineAt(targetPos);
 
   if (!inTable && !inCallout) {
@@ -193,7 +196,7 @@ export const deleteCurTargetLink = (
     }
     const finds = findLinkInLine(normalizedBaseName, lineText);
     if (finds.length > 0) {
-      findsLines.push(...new Array(finds.length).fill(i));
+      findsLines.push(...new Array<number>(finds.length).fill(i));
       findsAll.push(...finds);
     }
   }
@@ -205,7 +208,7 @@ export const deleteCurTargetLink = (
     }
     const finds = findLinkInLine(normalizedBaseName, lineText);
     if (finds.length > 0) {
-      findsLines.push(...new Array(finds.length).fill(i));
+      findsLines.push(...new Array<number>(finds.length).fill(i));
       findsAll.push(...finds);
     }
   }
@@ -241,7 +244,7 @@ export const handlerRenameFile = (
   const filePath = targetFile.path;
   const fileName = targetFile.name;
   const targetFolder = filePath.substring(0, filePath.length - fileName.length);
-  const fileType = fileName.split(".").pop() as string;
+  const fileType = fileName.split(".").pop();
   new RenameModal(
     plugin.app,
     targetFolder,
@@ -251,11 +254,11 @@ export const handlerRenameFile = (
       if (!result || result === filePath) {
         return;
       }
-      plugin.app.vault.adapter.exists(result).then((exists) => {
+      void plugin.app.vault.adapter.exists(result).then((exists) => {
         if (exists) {
           new Notice(`重命名失败，${result} 已存在。`);
         } else {
-          plugin.app.fileManager.renameFile(targetFile, result);
+          void plugin.app.fileManager.renameFile(targetFile, result);
         }
       });
     }
@@ -264,8 +267,8 @@ export const handlerRenameFile = (
 
 const findLinkInLine = (fileName: string, lineText: string) => {
   const fileNameMdLink = fileName.replace(/ /g, "%20");
-  const regWikiLink = /\!\[\[[^\[\]]*?\]\]/g;
-  const regMdLink = /\!\[[^\[\]]*?\]\(\s*[^\[\]\{\}']*\s*\)/g;
+  const regWikiLink = /!\[\[[^[\]]*?\]\]/g;
+  const regMdLink = /!\[[^[\]]*?\]\(\s*[^[\]{}']*\s*\)/g;
 
   const searchResult: [from: number, to: number][] = [];
   if (lineText.includes(fileName)) {
@@ -336,25 +339,24 @@ class RenameModal extends Modal {
       })
     );
 
-    setTimeout(() => {
-      const inputBox = setting.settingEl.querySelector(
+    window.setTimeout(() => {
+      const inputBox = setting.settingEl.querySelector<HTMLInputElement>(
         'input[type="text"]'
-      ) as HTMLInputElement | null;
+      );
       if (inputBox && inputBox.parentElement) {
         const folderIndicator = document.createElement("label");
+        folderIndicator.className = "af-rename-label af-rename-label-left";
         folderIndicator.innerText = this.folder;
-        folderIndicator.style.marginRight = "4px";
         inputBox.parentElement.insertBefore(folderIndicator, inputBox);
 
         const fileTypeIndicator = document.createElement("label");
+        fileTypeIndicator.className = "af-rename-label af-rename-label-right";
         fileTypeIndicator.innerText = `.${this.filetype}`;
-        fileTypeIndicator.style.marginLeft = "4px";
         inputBox.after(fileTypeIndicator);
 
         const parentEl = setting.settingEl.parentElement;
         if (parentEl) {
-          parentEl.style.display = "flex";
-          parentEl.style.justifyContent = "center";
+          parentEl.classList.add("af-rename-row");
         }
 
         inputBox.select();

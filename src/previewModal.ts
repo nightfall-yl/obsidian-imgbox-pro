@@ -24,7 +24,7 @@ export class DeleteAllLogsModal extends Modal {
   }
 
   showLogs() {
-    const logs = this.contentEl.createEl("div");
+    const logs = this.contentEl.createDiv();
     logs.addClass("attachment-flow-log");
     logs.setText(this.getLog());
   }
@@ -36,19 +36,20 @@ export class DeleteAllLogsModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
-    const headerWrapper = contentEl.createEl("div");
+    const headerWrapper = contentEl.createDiv();
     headerWrapper.addClass("attachment-flow-center-wrapper");
     this.showLogs();
 
-    const referencedMessageWrapper = contentEl.createEl("span");
-    referencedMessageWrapper.style.color = "red";
+    const referencedMessageWrapper = contentEl.createSpan(
+      "attachment-flow-referenced-message"
+    );
     referencedMessageWrapper.append(
       this.isChineseDisplayLanguage()
         ? `当前有 [${getReferencedLinkCount(this.plugin, this.note)}] 个仅被本笔记引用的附件会一起被处理。`
         : `[${getReferencedLinkCount(this.plugin, this.note)}] attachment(s) referenced only by this note will be processed as well.`
     );
 
-    const buttonWrapper = contentEl.createEl("div");
+    const buttonWrapper = contentEl.createDiv();
     buttonWrapper.addClass("attachment-flow-center-wrapper");
     const headerEl = headerWrapper.createEl("h1", {
       text: this.isChineseDisplayLanguage()
@@ -84,10 +85,12 @@ export class DeleteAllLogsModal extends Modal {
         : "Continue deleting the current file and its attachments that are not referenced by other notes"
     );
     removeLinkButton.addClass("mod-warning");
-    removeLinkButton.addEventListener("click", async () => {
-      await deleteFile(this.note, this.plugin);
-      await deleteAllAttachs(this.plugin, this.note);
-      this.close();
+    removeLinkButton.addEventListener("click", () => {
+      void (async () => {
+        await deleteFile(this.note, this.plugin);
+        await deleteAllAttachs(this.plugin, this.note);
+        this.close();
+      })();
     });
   }
 }

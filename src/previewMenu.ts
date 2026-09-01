@@ -1,8 +1,7 @@
-import { Menu, MenuItem, Notice, Platform, TFile } from "obsidian";
+import { MarkdownView, Menu, MenuItem, Notice, Platform, TFile } from "obsidian";
 import LocalImagesPlugin from "./main";
-import { getImageMimeTypeFromExtension, loadImageBlob, normalizeImageBlobForClipboard, onElement, isChineseDisplayLanguage } from "./previewHelpers";
+import { getImageMimeTypeFromExtension, loadImageBlob, normalizeImageBlobForClipboard, onElement, isChineseDisplayLanguage, getEditorView } from "./previewHelpers";
 import { deleteCurTargetLink, handlerDelFileNew, handlerRenameFile } from "./previewUtil";
-import { EditorView } from "@codemirror/view";
 
 export function addMenuExtendedSourceMode(
   plugin: LocalImagesPlugin,
@@ -181,9 +180,9 @@ export function addExternalImageMenuSourceMode(
       .setIcon("trash-2")
       .setTitle(isChineseDisplayLanguage() ? "删除图片链接" : "Delete Image Link")
       .onClick(() => {
-        const markdownView = plugin.app.workspace.getActiveViewOfType(MarkdownView) as any;
+        const markdownView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
         const editor = markdownView?.editor;
-        const editorView = (editor as { cm?: EditorView })?.cm;
+        const editorView = editor ? getEditorView(editor) : undefined;
         if (!editorView) {
           return;
         }
@@ -195,7 +194,7 @@ export function addExternalImageMenuSourceMode(
 
 export function registerEscapeButton(menu: Menu, doc: Document = document): void {
   menu.register(
-    onElement(doc, "keydown" as keyof HTMLElementEventMap, "*", (e: KeyboardEvent) => {
+    onElement(doc, "keydown", "*", (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();

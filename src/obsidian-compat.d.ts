@@ -1,5 +1,4 @@
 import "obsidian";
-import type { Editor, TAbstractFile, TFile } from "obsidian";
 
 export {};
 
@@ -9,16 +8,12 @@ declare module "obsidian" {
   }
 
   interface Vault {
-    getConfig(key: string): any;
+    getConfig(key: string): unknown;
     exists(path: string): Promise<boolean>;
   }
 
   interface Workspace {
-    activeEditor: {
-      file: TFile | null;
-      editor: Editor;
-      getSelection(): string;
-    };
+    activeEditor: import("obsidian").MarkdownFileInfo | null;
   }
 
   interface DataAdapter {

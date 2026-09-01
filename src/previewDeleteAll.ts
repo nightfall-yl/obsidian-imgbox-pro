@@ -1,10 +1,10 @@
-import { Notice, TFile, TFolder } from "obsidian";
+import { Notice, TFile } from "obsidian";
 import type { PreviewHost } from "./previewUtil";
 import { getFileParentFolder } from "./previewUtil";
 import { deleteFile } from "./previewDelete";
 
 export const deleteAllAttachs = async (plugin: PreviewHost, noteFile?: TFile | null) => {
-  const targetMd = noteFile ?? (plugin.app.workspace.getActiveFile() as TFile | null);
+  const targetMd = noteFile ?? (plugin.app.workspace.getActiveFile());
   if (!targetMd) {
     return;
   }
@@ -26,12 +26,12 @@ export const deleteAllAttachs = async (plugin: PreviewHost, noteFile?: TFile | n
       }
 
       try {
-        const attachFile = plugin.app.vault.getAbstractFileByPath(filePath) as TFile;
+        const attachFile = plugin.app.vault.getAbstractFileByPath(filePath);
         if (attachFile instanceof TFile) {
           await deleteFile(attachFile, plugin);
         }
 
-        const parentFolder = getFileParentFolder(attachFile) as TFolder | undefined;
+        const parentFolder = getFileParentFolder(attachFile);
         if (parentFolder && !folderHandled) {
           fileCount = parentFolder.children.length;
           folderHandled = true;
@@ -70,7 +70,7 @@ const isReferencedByOtherNotes = (
 };
 
 export const getReferencedLinkCount = (plugin: PreviewHost, noteFile?: TFile | null): number => {
-  const targetMd = noteFile ?? (plugin.app.workspace.getActiveFile() as TFile | null);
+  const targetMd = noteFile ?? (plugin.app.workspace.getActiveFile());
   if (!targetMd) {
     return 0;
   }

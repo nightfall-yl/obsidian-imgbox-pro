@@ -207,6 +207,18 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
   height: var(--size-4-4);
 }
 
+.lip-settings-danger-warning.is-hidden {
+  display: none;
+}
+
+textarea.lip-textarea-fullwidth {
+  width: 100%;
+}
+
+.attachment-flow-referenced-message {
+  color: var(--text-error);
+}
+
 /* Settings: conditional/dependent options */
 .lip-settings-dependent {
   overflow: hidden;
@@ -258,4 +270,24 @@ body.body.af-suppress-file-explorer-flash .workspace-leaf-content[data-type="fil
 
 .lip-collapsible .setting-item-heading {
   cursor: pointer;
+}
+
+/* Rename prompt: center the input row and space the folder/filetype labels */
+.af-rename-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.af-rename-label {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.af-rename-label-left {
+  margin-right: 4px;
+}
+
+.af-rename-label-right {
+  margin-left: 4px;
 }
