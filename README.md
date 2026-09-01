@@ -11,7 +11,7 @@
 - Attachment cleanup: unused images, unused attachments, and unlinked attachments in the current note folder
 - Image interaction (desktop): context menu, navigator highlight
 - Source-note jump: image navigator or image-tab context menu supports `Go to Source Note`
-- Top-navigation settings UI: `Localize / Image Management`
+- Single-page settings UI, with groups: `Auto Trigger / Storage & Naming / Download Behavior / Image Compression / Image Cleanup / Notifications`
 - Settings page language automatically follows Obsidian's system language
 - Cleanup `Ribbon` shortcut
 - Full command palette access
@@ -46,14 +46,14 @@ It triggers:
 
 ## Settings
 
-### Localize
+The settings page uses a single-page layout, with settings grouped in the following order.
 
-Auto Trigger:
+### Auto Trigger
 
 - automatic processing switch and interval
 - process newly created Markdown files
 
-Storage & Naming:
+### Storage & Naming
 
 - process all new attachments
 - save location (follow Obsidian / next to note / root directory)
@@ -66,32 +66,30 @@ Storage & Naming:
 - path format in tags
 - do not create Obsidian attachment folder
 
-Download Behavior:
+### Download Behavior
 
 - retry count per attachment
 - download unknown file types
 - file size lower limit (KB)
 - excluded extensions
 
-Image Compression:
+### Image Compression
 
 - compress images toggle
 - compression format (WebP / JPEG)
 - image quality
 
-### Image Management
-
-Notifications:
-
-- show notifications
-- command operation log modal
-
-Image Cleanup:
+### Image Cleanup
 
 - show cleanup Ribbon icon
 - delete destination (Obsidian Trash / System Trash / Delete permanently)
 - excluded folder list
 - exclude subfolders during cleanup
+
+### Notifications
+
+- show notifications
+- command operation log modal
 
 ## Supported Image Formats
 
