@@ -129,7 +129,6 @@ export const deleteFilesInTheList = async (
   settings: ISettings,
   app: App
 ): Promise<{ deletedImages: number; textToView: string }> => {
-  const deleteOption = settings.deleteDestination;
   const isChinese = isChineseDisplayLanguage();
   let deletedImages = 0;
   let textToView = "";
@@ -139,22 +138,10 @@ export const deleteFilesInTheList = async (
       continue;
     }
 
-    if (deleteOption === ".trash") {
-      await app.vault.trash(file, false);
-      textToView += isChinese
-        ? `[+] 已移动到 Obsidian 回收站：${file.path}</br>`
-        : `[+] Moved to Obsidian Trash: ${file.path}</br>`;
-    } else if (deleteOption === "system-trash") {
-      await app.vault.trash(file, true);
-      textToView += isChinese
-        ? `[+] 已移动到系统回收站：${file.path}</br>`
-        : `[+] Moved to System Trash: ${file.path}</br>`;
-    } else if (deleteOption === "permanent") {
-      await app.vault.delete(file);
-      textToView += isChinese
-        ? `[+] 已永久删除：${file.path}</br>`
-        : `[+] Deleted Permanently: ${file.path}</br>`;
-    }
+    await app.fileManager.trashFile(file);
+    textToView += isChinese
+      ? `[+] 已移入回收站：${file.path}</br>`
+      : `[+] Moved to Trash: ${file.path}</br>`;
 
     deletedImages++;
   }

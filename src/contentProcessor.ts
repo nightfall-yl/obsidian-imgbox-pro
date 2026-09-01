@@ -60,7 +60,7 @@ export function imageTagProcessor(
             const res = await requestUrl({ url: link });
             fileData = res.arrayBuffer;
           } catch (e) {
-            logError("Cannot read local file via file:// protocol: " + e, false);
+            logError("Cannot read local file via file:// protocol: " + String(e), false);
             return null;
           }
         } else {
@@ -167,7 +167,7 @@ export function imageTagProcessor(
 
       return null;
     } catch (error) {
-      logError("Image processing failed: " + error, false);
+      logError("Image processing failed: " + String(error), false);
       return null;
     }
   }

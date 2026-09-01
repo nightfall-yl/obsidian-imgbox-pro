@@ -21,7 +21,9 @@ export class ClearUnusedLogsModal extends Modal {
 
     const logs = contentEl.createDiv();
     logs.addClass("unused-images-logs");
-    logs.innerHTML = this.textToView;
+    for (const line of this.textToView.split(/<\/br>/i)) {
+      logs.createDiv({ text: line });
+    }
 
     const buttonWrapper = contentEl.createDiv();
     buttonWrapper.addClass("unused-images-center-wrapper");

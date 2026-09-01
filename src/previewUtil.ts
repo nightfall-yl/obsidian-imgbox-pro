@@ -79,33 +79,16 @@ export const pureClearAttachment = async (
   file: TFile,
   targetType: string
 ) => {
-  const deleteOption = plugin.settings.deleteDestination;
   const deleteFileFolder = onlyOneFileExists(file);
   const fileFolder = getFileParentFolder(file);
   const name = targetType === "img" ? "图片" : "文件";
 
   try {
-    if (deleteOption === ".trash") {
-      await plugin.app.vault.trash(file, false);
-      new Notice(`${name}已移动到 Obsidian 回收站。`, SUCCESS_NOTICE_TIMEOUT);
-      if (deleteFileFolder && fileFolder) {
-        await plugin.app.vault.trash(fileFolder, false);
-        new Notice("附件文件夹已删除。", 3000);
-      }
-    } else if (deleteOption === "system-trash") {
-      await plugin.app.vault.trash(file, true);
-      new Notice(`${name}已移动到系统回收站。`, SUCCESS_NOTICE_TIMEOUT);
-      if (deleteFileFolder && fileFolder) {
-        await plugin.app.vault.trash(fileFolder, true);
-        new Notice("附件文件夹已删除。", 3000);
-      }
-    } else if (deleteOption === "permanent") {
-      await plugin.app.vault.delete(file);
-      new Notice(`${name}已永久删除。`, SUCCESS_NOTICE_TIMEOUT);
-      if (deleteFileFolder && fileFolder) {
-        await plugin.app.vault.delete(fileFolder, true);
-        new Notice("附件文件夹已删除。", 3000);
-      }
+    await plugin.app.fileManager.trashFile(file);
+    new Notice(`${name}已移入回收站。`, SUCCESS_NOTICE_TIMEOUT);
+    if (deleteFileFolder && fileFolder) {
+      await plugin.app.fileManager.trashFile(fileFolder);
+      new Notice("附件文件夹已删除。", 3000);
     }
   } catch (error) {
     console.error(error);

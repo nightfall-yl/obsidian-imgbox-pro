@@ -14,13 +14,7 @@ export class DeleteAllLogsModal extends Modal {
   }
 
   getLog(): string {
-    const targetText =
-      this.plugin.settings.deleteDestination === ".trash"
-        ? "Obsidian 回收站"
-        : this.plugin.settings.deleteDestination === "system-trash"
-          ? "系统回收站"
-          : "永久删除";
-    return `确认要删除“${this.note.basename}.md”吗？\n\n删除后的文件将进入：${targetText}。`;
+    return `确认要删除“${this.note.basename}.md”吗？\n\n删除后的文件将移入回收站。`;
   }
 
   showLogs() {

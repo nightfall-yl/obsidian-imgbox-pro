@@ -61,7 +61,7 @@ export function md5Sig(contentData: ArrayBuffer = undefined) {
 
     return signature + "_MD5";
   } catch (e) {
-    logError("Cannot generate md5: " + e, false);
+    logError("Cannot generate md5: " + String(e), false);
     return null;
   }
 }
@@ -207,7 +207,7 @@ export async function base64ToBuff(data: string): Promise<ArrayBuffer> {
     }
     return bytes.buffer;
   } catch (e) {
-    logError("Cannot read base64: " + e, false);
+    logError("Cannot read base64: " + String(e), false);
     return null;
   }
 }
@@ -224,7 +224,7 @@ export async function downloadImage(url: string): Promise<ArrayBuffer> {
     logError(res, true);
     return res.arrayBuffer;
   } catch (e) {
-    logError("Cannot download the file: " + e, false);
+    logError("Cannot download the file: " + String(e), false);
     return null;
   }
 }

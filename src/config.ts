@@ -70,7 +70,6 @@ export interface ISettings {
   skipObsidianFolderCreation: boolean;
 
   // ---- 图片清理 ----
-  deleteDestination: string;
   showOperationLogs: boolean;
   excludeSubfolders: boolean;
   excludedFolders: string;
@@ -108,7 +107,6 @@ export const DEFAULT_SETTINGS: Partial<ISettings> = {
   skipObsidianFolderCreation: false,
 
   // 图片清理
-  deleteDestination: ".trash",
   showOperationLogs: true,
   excludeSubfolders: false,
   excludedFolders: "",

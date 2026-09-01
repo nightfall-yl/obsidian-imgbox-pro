@@ -86,12 +86,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     localizeAdvancedTitle: "高级选项",
     skipObsidianFolderCreation: "不创建 Obsidian 附件文件夹",
     skipObsidianFolderCreationDesc: "用于兼容其他插件，但可能导致部分工作流行为异常。",
-    deleteDestination: "删除去向",
-    deleteDestinationDesc: "选择删除未使用图片、附件或笔记时的文件去向。",
-    deletePermanent: "永久删除",
-    deleteObsidianTrash: "移动到 Obsidian 回收站",
-    deleteSystemTrash: "移动到系统回收站",
-    deletePermanentWarning: "⚠ 永久删除不可恢复！请谨慎操作。",
     showOperationLogs: "命令操作日志弹窗",
     showOperationLogsDesc: "Ribbon/命令操作完成后，弹出包含操作详情的日志窗口。",
     excludeSubfolders: "清理时排除子文件夹",
@@ -176,13 +170,6 @@ const LOCALE_TEXT: Record<string, Record<string, string>> = {
     skipObsidianFolderCreation: "Do not create Obsidian attachment folder",
     skipObsidianFolderCreationDesc:
       "Improves compatibility with other plugins, but may affect some workflows.",
-    deleteDestination: "Delete destination",
-    deleteDestinationDesc:
-      "Choose where deleted files go when removing unused images, attachments, or notes.",
-    deletePermanent: "Delete permanently",
-    deleteObsidianTrash: "Move to Obsidian Trash",
-    deleteSystemTrash: "Move to System Trash",
-    deletePermanentWarning: "⚠ Permanent deletion cannot be undone! Please be careful.",
     showOperationLogs: "Command operation log modal",
     showOperationLogsDesc: "After Ribbon/command operations complete, show a log modal with operation details.",
     excludeSubfolders: "Exclude subfolders during cleanup",
@@ -201,19 +188,6 @@ export default class SettingTab extends PluginSettingTab {
   constructor(app: App, plugin: LocalImagesPlugin) {
     super(app, plugin);
     this.plugin = plugin;
-  }
-
-  private updateDeleteDangerWarning(
-    warningEl: HTMLElement,
-    value: string,
-    t: (key: string) => string
-  ): void {
-    if (value === "permanent") {
-      warningEl.toggleClass("is-hidden", false);
-      warningEl.setText(t("deletePermanentWarning"));
-    } else {
-      warningEl.toggleClass("is-hidden", true);
-    }
   }
 
   private applyCompressionEnabled(
@@ -630,27 +604,6 @@ export default class SettingTab extends PluginSettingTab {
           this.plugin.refreshRibbonIcons();
         })
       );
-
-    this.createSetting(cleanupGroupEl)
-      .setName(t("deleteDestination"))
-      .setDesc(t("deleteDestinationDesc"))
-      .addDropdown((dropdown) => {
-        dropdown
-          .addOption(".trash", t("deleteObsidianTrash"))
-          .addOption("system-trash", t("deleteSystemTrash"))
-          .addOption("permanent", t("deletePermanent"))
-          .setValue(this.plugin.settings.deleteDestination)
-          .onChange(async (value) => {
-            this.plugin.settings.deleteDestination = value;
-            await this.plugin.saveSettings();
-            this.updateDeleteDangerWarning(deleteWarningEl, value, t);
-          });
-      });
-
-    const deleteWarningEl = localizeEl.createDiv({
-      cls: "lip-settings-danger-warning",
-    });
-    this.updateDeleteDangerWarning(deleteWarningEl, this.plugin.settings.deleteDestination, t);
 
     this.createSetting(cleanupGroupEl)
       .setName(t("excludedFolders"))

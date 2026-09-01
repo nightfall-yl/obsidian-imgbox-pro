@@ -296,7 +296,6 @@ export default class LocalImagesPlugin extends Plugin {
         }
 
         let rootdir = this.settings.mediaFolderPath;
-        const useSysTrash = this.app.vault.getConfig("trashOption") === "system";
 
         if (pathBasename(rootdir).includes("${notename}")) {
           rootdir = rootdir.replace("${notename}", file.basename);
@@ -307,7 +306,7 @@ export default class LocalImagesPlugin extends Plugin {
 
           try {
             if (this.app.vault.getAbstractFileByPath(rootdir) instanceof TFolder) {
-              void this.app.vault.trash(this.app.vault.getAbstractFileByPath(rootdir), useSysTrash);
+              void this.app.fileManager.trashFile(this.app.vault.getAbstractFileByPath(rootdir));
               showStatusBalloon(
                 isChineseDisplayLanguage()
                   ? `附件文件夹 ${rootdir} 已移入回收站。`
@@ -362,8 +361,8 @@ export default class LocalImagesPlugin extends Plugin {
           } catch (e) {
             showBalloon(
               isChineseDisplayLanguage()
-                ? "无法移动附件文件夹：\r\n" + e
-                : "Cannot move attachment folder: \r\n" + e,
+                ? "无法移动附件文件夹：\r\n" + String(e)
+                : "Cannot move attachment folder: \r\n" + String(e),
               true
             );
             logError(e);
@@ -404,11 +403,25 @@ export default class LocalImagesPlugin extends Plugin {
 
     this.registerEvent(
       this.app.workspace.on("editor-paste", (evt, editor, info) => {
-      if (evt.defaultPrevented) {
-        return;
-      }
-      void this.onPasteFunc(evt, editor, info);
-    })
+        if (evt.defaultPrevented) {
+          return;
+        }
+
+        // 过滤器：仅拦截待本地化的图片/文件粘贴。普通文本粘贴必须放行，故
+        // 不能无条件 preventDefault()。只有当剪贴板含文件、且目标笔记不在
+        // 排除文件夹时，才拦截 Obsidian 默认插入文件路径，改由 onPasteFunc
+        // 处理本地化。
+        const activeFile = this.getCurrentNote();
+        if (
+          (evt.clipboardData?.files.length ?? 0) > 0 &&
+          activeFile &&
+          !this.ThePathExcluded(String(activeFile.parent?.path))
+        ) {
+          evt.preventDefault();
+        }
+
+        void this.onPasteFunc(evt, editor, info);
+      })
     );
 
     this.setupQueueInterval();
@@ -459,21 +472,9 @@ export default class LocalImagesPlugin extends Plugin {
         : isChinese
         ? "清理未使用附件 - 预览"
         : "Clear Unused Attachments - Preview";
-    const deleteDestinationLabel =
-      this.settings.deleteDestination === "permanent"
-        ? isChinese
-          ? "当前删除方式：永久删除"
-          : "Current delete mode: permanent deletion"
-        : this.settings.deleteDestination === ".trash"
-        ? isChinese
-          ? "当前删除方式：Obsidian 回收站"
-          : "Current delete mode: Obsidian Trash"
-        : isChinese
-        ? "当前删除方式：系统回收站"
-        : "Current delete mode: System Trash";
     const previewDescription = isChinese
-      ? `${deleteDestinationLabel}。确认后将继续删除这些未使用文件。`
-      : `${deleteDestinationLabel}. Confirm to delete these unused files.`;
+      ? "删除后的文件将移入回收站。确认后将继续删除这些未使用文件。"
+      : "Deleted files will be moved to the trash. Confirm to delete these unused files.";
 
     const previewModal = new ClearUnusedPreviewModal(
       modalTitle,
@@ -824,26 +825,12 @@ export default class LocalImagesPlugin extends Plugin {
       }
 
       if (type == "execremove") {
-        const useSysTrash = this.app.vault.getConfig("trashOption") === "system";
-        const deletePermanently = this.settings.deleteDestination === "permanent";
         const isChinese = isChineseDisplayLanguage();
-        let msg = "";
+        const msg = isChinese ? "已移入回收站。" : "were moved to the trash can.";
 
         if (filesToRemove) {
           filesToRemove.forEach((el: TFile) => {
-            if (deletePermanently) {
-              msg = isChinese ? "已永久删除。" : "were deleted completely.";
-              void this.app.vault.delete(el, true);
-            } else {
-              if (useSysTrash) {
-                msg = isChinese ? "已移动到系统回收站。" : "were moved to the system garbage can.";
-              } else {
-                msg = isChinese
-                  ? "已移动到 Obsidian 回收站。"
-                  : "were moved to the Obsidian garbage can.";
-              }
-              void this.app.vault.trash(el, useSysTrash);
-            }
+            void this.app.fileManager.trashFile(el);
           });
         }
 
