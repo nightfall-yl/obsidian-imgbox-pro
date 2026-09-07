@@ -23,6 +23,16 @@ export default defineConfig([
     },
   },
   {
+    // main.ts 的 editor-paste 处理器不能调用 evt.preventDefault()：本插件对
+    // 图片/文件粘贴并不自行插入附件，而是依赖 Obsidian 默认粘贴行为创建附件
+    // 并插入链接，随后经由文件创建/修改流水线做本地化。一旦 preventDefault 会
+    // 抑制 Obsidian 的默认插入，导致图片无法粘贴进 .md。故豁免该规则。
+    files: ["src/main.ts"],
+    rules: {
+      "obsidianmd/editor-drop-paste": "off",
+    },
+  },
+  {
     // 这些文件用 document.createElement("canvas"/"label") 创建游离 DOM 元素。
     // 本项目内置的 obsidian.d.ts（1.12.3）并未导出独立的 createEl 函数（仅
     // 暴露元素方法 .createEl()，必须依附父节点），而 canvas 转换时需要脱离

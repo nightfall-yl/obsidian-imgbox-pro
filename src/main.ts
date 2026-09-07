@@ -406,20 +406,6 @@ export default class LocalImagesPlugin extends Plugin {
         if (evt.defaultPrevented) {
           return;
         }
-
-        // 过滤器：仅拦截待本地化的图片/文件粘贴。普通文本粘贴必须放行，故
-        // 不能无条件 preventDefault()。只有当剪贴板含文件、且目标笔记不在
-        // 排除文件夹时，才拦截 Obsidian 默认插入文件路径，改由 onPasteFunc
-        // 处理本地化。
-        const activeFile = this.getCurrentNote();
-        if (
-          (evt.clipboardData?.files.length ?? 0) > 0 &&
-          activeFile &&
-          !this.ThePathExcluded(String(activeFile.parent?.path))
-        ) {
-          evt.preventDefault();
-        }
-
         void this.onPasteFunc(evt, editor, info);
       })
     );
