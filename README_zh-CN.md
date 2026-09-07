@@ -2,7 +2,7 @@
 
 > 图片管理工具
 
-`ImgBox Pro` 是一个 Obsidian 图片与附件管理插件，支持桌面端和移动端。它把图片本地化、图片预览和附件清理交互整合到一个插件里，适合长期维护包含大量附件的笔记。
+把图片本地化、重命名和附件清理交互整合到一个插件中，长期维护包含大量附件的笔记，支持桌面端和移动端。
 
 ## 功能概览
 
@@ -126,7 +126,6 @@
 ## 致谢
 
 - [Sergei-Korneev/obsidian-local-images-plus](https://github.com/Sergei-Korneev/obsidian-local-images-plus)
-- [elf004-star/Obsidian-AttachFlow](https://github.com/elf004-star/Obsidian-AttachFlow)
 - [ozntel/oz-clear-unused-images-obsidian](https://github.com/ozntel/oz-clear-unused-images-obsidian)
 
 ## GitHub

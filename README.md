@@ -2,7 +2,7 @@
 
 > An image management toolkit for Obsidian
 
-`ImgBox Pro` is an Obsidian plugin for managing images and attachments, supporting both desktop and mobile. It combines media localization, attachment cleanup, and preview interaction enhancements in a single plugin, suitable for long-term maintenance of notes with large numbers of attachments.
+Combines image localization, renaming, and attachment cleanup into a single plugin, suitable for long-term maintenance of notes with large numbers of attachments, supporting both desktop and mobile.
 
 ## Features Overview
 
@@ -126,7 +126,6 @@ Notes:
 ## Credits
 
 - [Sergei-Korneev/obsidian-local-images-plus](https://github.com/Sergei-Korneev/obsidian-local-images-plus)
-- [elf004-star/Obsidian-AttachFlow](https://github.com/elf004-star/Obsidian-AttachFlow)
 - [ozntel/oz-clear-unused-images-obsidian](https://github.com/ozntel/oz-clear-unused-images-obsidian)
 
 ## GitHub
