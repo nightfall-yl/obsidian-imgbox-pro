@@ -1,7 +1,5 @@
 # ImgBox Pro
 
-> An image management toolkit for Obsidian
-
 Combines image localization, renaming, and attachment cleanup into a single plugin, suitable for long-term maintenance of notes with large numbers of attachments, supporting both desktop and mobile.
 
 [![Version](https://img.shields.io/badge/version-26.0.5-blue)](https://github.com/nightfall-yl/obsidian-imgbox-pro) | [![Obsidian](https://img.shields.io/badge/Obsidian-1.11.0%2B-purple)](https://obsidian.md) | [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
