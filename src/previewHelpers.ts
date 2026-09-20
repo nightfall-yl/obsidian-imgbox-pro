@@ -217,7 +217,7 @@ export function onElement(
         matchedElement = target.closest(selector);
       }
     } catch (e) {
-      console.error("[AttachFlow] Error matching selector:", selector, e);
+      console.error("Error matching selector:", selector, e);
       return;
     }
 

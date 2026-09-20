@@ -4,6 +4,10 @@
 
 把图片本地化、重命名和附件清理交互整合到一个插件中，长期维护包含大量附件的笔记，支持桌面端和移动端。
 
+[![Version](https://img.shields.io/badge/version-26.0.5-blue)](https://github.com/nightfall-yl/obsidian-imgbox-pro) | [![Obsidian](https://img.shields.io/badge/Obsidian-1.11.0%2B-purple)](https://obsidian.md) | [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+简体中文 | [English](README.md)
+
 ## 功能概览
 
 - 图片本地化：下载网页图片、处理粘贴 / 拖拽媒体、保存 base64 图片
