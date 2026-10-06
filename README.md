@@ -4,7 +4,7 @@ Combines image localization, renaming, and attachment cleanup into a single plug
 
 [![Version](https://img.shields.io/github/v/release/nightfall-yl/obsidian-imgbox-pro)](https://github.com/nightfall-yl/obsidian-imgbox-pro/releases) | [![Obsidian](https://img.shields.io/badge/Obsidian-1.11.0%2B-purple)](https://obsidian.md) | [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-[简体中文](README_zh-CN.md) | English
+English | [简体中文](README_zh-CN.md)
 
 ## Features Overview
 
