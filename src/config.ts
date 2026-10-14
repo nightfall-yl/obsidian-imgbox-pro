@@ -1,6 +1,4 @@
 export const APP_NAME = "ImgBox Pro";
-export const APP_VERSION = "2026.3.1";
-export const APP_TITLE = `${APP_NAME}  ${APP_VERSION}`;
 
 export const SUPPORTED_OS = { win: "win32", unix: "linux,darwin,freebsd,openbsd" };
 
